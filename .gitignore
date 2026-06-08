@@ -6,6 +6,20 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+limpeza.txt     
+logs.txt
+logs2.txt
+logs3.txt
+logss_compilacao_por_rebuil.txt
+test.txt
+relatorio_compilacao.txt
+RFC: Arquitetura de Orquestração de Fluxos — Nexus v0.txt
+payloa_frontend.txt
+novo versionamento.txt
+ESTATEGIA.TXT
+falha_sinerigca_reafatoração.txt
+
+
 
 node_modules
 dist

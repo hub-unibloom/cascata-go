@@ -280,9 +280,32 @@ func parseFilter(key, value string, paramIndex int) (string, interface{}) {
 	return fmt.Sprintf("%s = $%d", column, paramIndex), value
 }
 
+// splitSelectFields splits a select parameter by comma, respecting parentheses depth
+// This ensures that "product_catalog(name,brand)" is not split incorrectly
+func splitSelectFields(s string) []string {
+	var fields []string
+	depth := 0
+	start := 0
+	for i, ch := range s {
+		switch ch {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ',':
+			if depth == 0 {
+				fields = append(fields, strings.TrimSpace(s[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	fields = append(fields, strings.TrimSpace(s[start:]))
+	return fields
+}
+
 func parseSelect(s string) string {
 	if s == "" || s == "*" { return "*" }
-	parts := strings.Split(s, ",")
+	parts := splitSelectFields(s)
 	quoted := []string{}
 	for _, p := range parts {
 		p = strings.TrimSpace(p)

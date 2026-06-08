@@ -46,6 +46,29 @@ func NewResourceEmbeddingParser(fkCache *ForeignKeyCache) *ResourceEmbeddingPars
 	}
 }
 
+// splitSelectFields splits a select parameter by comma, respecting parentheses depth
+// This ensures that "product_catalog(name,brand)" is not split incorrectly
+func splitSelectFields(s string) []string {
+	var fields []string
+	depth := 0
+	start := 0
+	for i, ch := range s {
+		switch ch {
+		case '(':
+			depth++
+		case ')':
+			depth--
+		case ',':
+			if depth == 0 {
+				fields = append(fields, strings.TrimSpace(s[start:i]))
+				start = i + 1
+			}
+		}
+	}
+	fields = append(fields, strings.TrimSpace(s[start:]))
+	return fields
+}
+
 // ParseSelect parses a PostgREST-style select parameter into SelectField structs
 // Examples:
 //   "id,name" -> [{Table: "", Column: "id"}, {Table: "", Column: "name"}]
@@ -57,7 +80,7 @@ func (p *ResourceEmbeddingParser) ParseSelect(selectParam string) ([]SelectField
 	}
 
 	fields := []SelectField{}
-	parts := strings.Split(selectParam, ",")
+	parts := splitSelectFields(selectParam)
 
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
@@ -257,7 +280,7 @@ func (p *ResourceEmbeddingParser) buildEmbeddedResource(
 	joins := []JoinClause{joinClause}
 
 	// Parse the columns to select from the embedded table
-	columnParts := strings.Split(field.Column, ",")
+	columnParts := splitSelectFields(field.Column)
 	selectParts := []string{}
 
 	for _, colPart := range columnParts {
