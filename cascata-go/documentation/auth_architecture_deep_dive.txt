@@ -1,0 +1,2779 @@
+# =============================================================================
+# CASCATA AUTH SYSTEM - DOCUMENTAÇÃO ARQUITETURAL PROFUNDA E COMPLETA
+# =============================================================================
+# 
+# Arquivo: /documentation/auth_architecture_deep_dive.txt
+# Versão: 2.0 (Completa e Profunda)
+# Data: Abril 2026
+# 
+# Este documento contém análise profunda, específica e completa de TODAS as 
+# features de autenticação do Cascata, derivada do estudo direto de TODO o 
+# código-fonte envolvido em auth e tenancy.
+#
+# BASEADO EM:
+# - /backend/services/AuthService.ts (Core auth logic, OTP, TOTP, webhooks)
+# - /backend/services/GoTrueService.ts (Token handling, signup, MFA enforcement)
+# - /backend/services/RateLimitService.ts (Smart lockout, panic mode)
+# - /backend/services/WebhookService.ts (Challenge dispatch)
+# - /backend/src/controllers/DataAuthController.ts (HTTP endpoints)
+# - /backend/internal/services/auth.go (Go implementation, session rotation)
+# - /backend/internal/services/gotrue.go (GoTrue bridge)
+# - /backend/internal/services/database.go (Schema definition)
+# - /backend/internal/services/ratelimit.go (Go lockout logic)
+# - /frontend/lib/PayloadCrypto.ts (ECDH + AES encryption)
+#
+# =============================================================================
+
+
+# =============================================================================
+# 1. VISÃO GERAL E FILOSOFIA
+# =============================================================================
+
+## 1.1 O Que É o Cascata Auth?
+
+O sistema de autenticação do Cascata é um ORQUESTRADOR DE IDENTIDADE 
+SOBERANO (Sovereign Identity Orchestrator) enterprise-grade que vai muito 
+além de "login com email/senha".
+
+### Capacidades Core:
+- **UNIVERSAL LOGIN**: Qualquer provider (email, CPF, telefone, biometria, custom)
+- **MFA MULTI-CAMADAS**: TOTP (RFC 6238), OTP via webhook, Passwordless
+- **GESTÃO DE IDENTIDADES**: Link/unlink de múltiplas identidades por usuário
+- **SEGURANÇA ADAPTATIVA**: Smart Lockout, Panic Revocation, Device Fingerprinting
+- **POLÍTICAS SOBERANAS**: Regras por origin, provider, contexto
+- **CRIPTOGRAFIA END-TO-END**: ECDH P-256 + HKDF + AES-256-GCM
+
+## 1.2 Arquitetura de Tenancy
+
+O sistema é 100% multi-tenant. Cada projeto (tenant) tem:
+- Schema `auth` isolado no PostgreSQL
+- Tabelas dedicadas: users, identities, sessions, policies
+- Configurações soberanas independentes
+- Isolamento completo de dados via RLS (Row Level Security)
+
+Fluxo de Resolução de Tenant:
+1. Requisição chega com `{slug}` na URL
+2. RateLimitService.warmupProjectContext() resolve o tenant
+3. L1 Cache (RAM V8) -> L2 Cache (Dragonfly) -> PostgreSQL
+4. Project config carregado com auth_strategies, policies, jwt_secret
+
+
+# =============================================================================
+# 2. MODELO DE DADOS - AUTH SCHEMA
+# =============================================================================
+
+## 2.1 auth.users - Entidade Base
+
+Propósito: Usuário abstrato, agnóstico de provider
+
+```sql
+CREATE TABLE auth.users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  last_sign_in_at TIMESTAMP WITH TIME ZONE,
+  
+  -- Metadados flexíveis (JSONB)
+  raw_user_meta_data JSONB DEFAULT '{}',
+  
+  -- Estados
+  banned BOOLEAN DEFAULT FALSE,
+  email_confirmed_at TIMESTAMP WITH TIME ZONE,
+  
+  -- Tokens de confirmação
+  confirmation_token TEXT,
+  confirmation_sent_at TIMESTAMP WITH TIME ZONE
+);
+
+-- Índices
+CREATE INDEX idx_users_email ON auth.users((raw_user_meta_data->>'email'));
+CREATE INDEX idx_users_created_at ON auth.users(created_at DESC);
+```
+
+Campos importantes em raw_user_meta_data:
+- `email`: Email principal do usuário
+- `phone`: Telefone
+- `name`: Nome do usuário
+- `avatar_url`: URL do avatar
+- `totp_pending_secret`: Segredo TOTP durante setup
+- `mfa_enabled`: Boolean indicando MFA ativo
+
+## 2.2 auth.identities - CORE CONCEPT
+
+Propósito: Chaves de autenticação vinculadas ao usuário (1:N)
+
+```sql
+CREATE TABLE auth.identities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  
+  -- Provider e identificador
+  provider TEXT NOT NULL,              -- 'email', 'cpf', 'phone', 'google', 'totp'
+  identifier TEXT NOT NULL,              -- O valor (email, CPF, telefone)
+  
+  -- Credenciais
+  password_hash TEXT,                  -- bcrypt hash (se aplicável)
+  
+  -- Metadados específicos da identidade
+  identity_data JSONB DEFAULT '{}',
+  
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  last_sign_in_at TIMESTAMP WITH TIME ZONE,
+  verified_at TIMESTAMP WITH TIME ZONE,  -- Email/identidade confirmada?
+  
+  -- Origem
+  created_via_origin TEXT,             -- URL de onde foi criada
+  
+  -- Constraints
+  UNIQUE(provider, identifier)
+);
+
+-- Índices críticos
+CREATE INDEX idx_identities_user ON auth.identities(user_id);
+CREATE INDEX idx_identities_provider_identifier ON auth.identities(provider, identifier);
+CREATE INDEX idx_identities_provider ON auth.identities(provider);
+```
+
+### Exemplo Prático - Múltiplas Identidades:
+
+```
+User: usr_abc123 (João Silva)
+├── Identity: provider='email', identifier='joao@email.com'
+│             password_hash='$2b$10$...', verified_at='2026-01-15'
+├── Identity: provider='cpf', identifier='123.456.789-00'
+│             password_hash='$2b$10$...', verified_at='2026-01-15'
+├── Identity: provider='phone', identifier='+5511999999999'
+│             password_hash=NULL (passwordless), verified_at='2026-02-01'
+├── Identity: provider='google', identifier='google_sub_123456'
+│             password_hash=NULL (OAuth), verified_at='2026-01-20'
+└── Identity: provider='totp', identifier='JBSWY3DPEHPK3PXP'
+              password_hash=NULL (MFA secret), created_at='2026-03-01'
+```
+
+**Benefícios desta arquitetura:**
+1. **Login Universal**: João pode logar com email, CPF OU telefone (mesma conta)
+2. **Progressive Enhancement**: Começa com OAuth, adiciona senha depois
+3. **MFA como Identity**: TOTP é apenas mais uma identity
+4. **Unified Profile**: Todas as identidades levam ao mesmo usuário
+
+## 2.3 auth.refresh_tokens - Sessões
+
+Propósito: Tokens de refresh para sessões persistentes
+
+```sql
+CREATE TABLE auth.refresh_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  token_hash TEXT NOT NULL,              -- SHA256 do token
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  revoked BOOLEAN DEFAULT FALSE,
+  
+  -- Timestamps
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  
+  -- Token rotation
+  parent_token UUID,                     -- Para detectar reuso
+  
+  -- Device fingerprinting
+  ip_address TEXT,
+  user_agent TEXT,
+  fingerprint_hash TEXT                  -- Hash do device fingerprint
+);
+
+-- Índices
+CREATE INDEX idx_refresh_tokens_user ON auth.refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_hash ON auth.refresh_tokens(token_hash);
+CREATE INDEX idx_refresh_tokens_expires ON auth.refresh_tokens(expires_at) 
+  WHERE revoked = false;
+```
+
+Token Rotation:
+```
+1. Client envia: refresh_token = "rt_abc123"
+2. Backend calcula: SHA256("rt_abc123") = "hash_xyz"
+3. Verifica se existe e não está revoked
+4. Gera novo: "rt_def456"
+5. ATOMIC: UPDATE old SET revoked=true, INSERT new
+6. Se old for reusado -> REVOKE ALL SESSIONS (possível ataque)
+```
+
+## 2.4 auth.otp_codes - Challenges
+
+Propósito: Códigos OTP para passwordless, magic links, recovery
+
+```sql
+CREATE TABLE auth.otp_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider TEXT NOT NULL,                  -- Quem gerou
+  identifier TEXT NOT NULL,                  -- Para quem
+  code_hash TEXT NOT NULL,                 -- SHA256 do código
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  attempts INTEGER DEFAULT 0,              -- Tentativas de verificação
+  metadata JSONB DEFAULT '{}',             -- { type: 'magiclink'|'recovery'|'signup' }
+  ip_address TEXT,                         -- IP que solicitou
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  
+  -- Constraint único com upsert
+  UNIQUE(provider, identifier)
+);
+
+-- Índice para cleanup
+CREATE INDEX idx_otp_codes_expires ON auth.otp_codes(expires_at);
+```
+
+Comportamento de UPSERT:
+```sql
+INSERT INTO auth.otp_codes (provider, identifier, code_hash, expires_at)
+VALUES ('cpf', '123.456.789-00', 'sha256:abc...', NOW() + INTERVAL '15 min')
+ON CONFLICT (provider, identifier) 
+DO UPDATE SET 
+  code_hash = EXCLUDED.code_hash,
+  expires_at = EXCLUDED.expires_at,
+  attempts = 0,
+  ip_address = EXCLUDED.ip_address;
+```
+
+Isso garante:
+- Apenas um código ativo por provider+identifier
+- Novo código sobrescreve o antigo
+- Attempts são resetados
+
+## 2.5 auth.used_totp_codes - Anti-Replay
+
+Propósito: Prevenir reuso de códigos TOTP (ataque replay)
+
+```sql
+CREATE TABLE auth.used_totp_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,                      -- Código que foi usado
+  used_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índice para cleanup (códigos antigos)
+CREATE INDEX idx_used_totp_codes_at ON auth.used_totp_codes(used_at);
+```
+
+Janela de tolerância: 5 minutos
+```sql
+-- Verifica se código já foi usado
+SELECT EXISTS(
+  SELECT 1 FROM auth.used_totp_codes
+  WHERE user_id = $1 AND code = $2
+  AND used_at > NOW() - INTERVAL '5 minutes'
+);
+```
+
+## 2.6 auth.policies - SOVEREIGN ORCHESTRATION
+
+Propósito: Regras de autenticação por contexto (prioridade-based)
+
+```sql
+CREATE TABLE auth.policies (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  priority INTEGER DEFAULT 0,              -- MAIOR = mais prioritária
+  
+  -- Matching criteria (NULL = match all)
+  provider TEXT,                           -- Qual provider afeta
+  origin TEXT,                             -- Qual origin (pode usar wildcard)
+  
+  -- Regras de segurança
+  require_password BOOLEAN DEFAULT true,
+  require_otp BOOLEAN DEFAULT false,
+  require_user_mfa_choice BOOLEAN DEFAULT false,
+  auto_login BOOLEAN DEFAULT false,        -- Passwordless
+  
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índice para resolução eficiente
+CREATE INDEX idx_policies_priority ON auth.policies(priority DESC) WHERE active = true;
+CREATE INDEX idx_policies_provider ON auth.policies(provider) WHERE active = true;
+```
+
+Algoritmo de Resolução (resolveSovereignPolicy):
+```
+1. Coleta todas as políticas ativas para o projeto
+2. Filtra por provider (se policy.provider != NULL, deve bater)
+3. Filtra por origin (suporta wildcard: '*.banco.com')
+4. Ordena por priority DESC
+5. Retorna a primeira que der match
+```
+
+Exemplo de Políticas:
+```sql
+-- Política 1: Externo MFA Obrigatório (prioridade 100)
+INSERT INTO auth.policies (name, priority, provider, origin, require_password, require_otp, require_user_mfa_choice)
+VALUES ('Externo MFA', 100, 'cpf', '*.externo.banco.com', true, true, true);
+
+-- Política 2: Interno Passwordless (prioridade 50)
+INSERT INTO auth.policies (name, priority, provider, origin, require_password, auto_login)
+VALUES ('Interno Passwordless', 50, 'cpf', 'https://intranet.banco.com', false, true);
+
+-- Política 3: Default (prioridade 0)
+INSERT INTO auth.policies (name, priority, require_password)
+VALUES ('Default', 0, true);
+```
+
+Resolução para login de CPF de *.externo.banco.com:
+- Match Política 1 (priority 100) -> VENCE
+- Requer: password + OTP (usuário pode escolher TOTP ou SMS)
+
+## 2.7 auth.panic_revocations - EMERGÊNCIA
+
+Propósito: Revogação imediata de acessos (Sovereign Panic)
+
+```sql
+CREATE TABLE auth.panic_revocations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  target_type TEXT CHECK ('origin', 'user', 'provider', 'global'),
+  target_value TEXT,                       -- Qual origin/user/provider
+  metadata JSONB DEFAULT '{}',             -- { reason: "...", triggered_by: "..." }
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_panic_revocations_target ON auth.panic_revocations(target_type, target_value);
+CREATE INDEX idx_panic_revocations_created ON auth.panic_revocations(created_at DESC);
+```
+
+Modos de Revogação:
+
+| target_type | Ação executada |
+|-------------|----------------|
+| `user` | Revoga todos os tokens do usuário específico |
+| `origin` | Bloqueia todos logins daquele origin |
+| `provider` | Bloqueia todos logins daquele provider |
+| `global` | Revoga TUDO (app-wide lockdown) |
+
+Implementação (Go + Dragonfly):
+```go
+// 1. Registra no PostgreSQL
+pool.Exec(ctx, `INSERT INTO auth.panic_revocations ...`)
+
+// 2. Set no Dragonfly (24h TTL)
+dragonfly.Set(ctx, 
+  fmt.Sprintf("panic:%s:%s", slug, target), 
+  "true", 
+  redis.KeepTTL
+)
+
+// 3. Se target='user', revoga tokens
+pool.Exec(ctx, `UPDATE auth.refresh_tokens SET revoked = true WHERE user_id = $1`, userId)
+
+// 4. Se target='global', revoga TUDO
+pool.Exec(ctx, `UPDATE auth.refresh_tokens SET revoked = true`)
+dragonfly.Set(ctx, fmt.Sprintf("panic:%s", slug), "true")
+```
+
+## 2.8 auth.audit_log - COMPLIANCE
+
+Propósito: Auditoria completa para GDPR/LGPD
+
+```sql
+CREATE TABLE auth.audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  event TEXT NOT NULL,                     -- login, logout, link, setup_totp, etc
+  provider TEXT,
+  identifier TEXT,
+  origin TEXT,
+  ip_address TEXT,
+  status TEXT,                             -- success, failure, blocked, revoked
+  policy_name TEXT,                        -- Qual política foi aplicada
+  metadata JSONB DEFAULT '{}',             -- Detalhes extras
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_audit_user ON auth.audit_log(user_id, created_at DESC);
+CREATE INDEX idx_audit_event ON auth.audit_log(event, created_at DESC);
+CREATE INDEX idx_audit_created ON auth.audit_log(created_at DESC);
+```
+
+Eventos Logados:
+- `signup` - Novo usuário criado
+- `login` - Login bem-sucedido
+- `login_failure` - Login falhou
+- `logout` - Logout
+- `link` - Identidade vinculada
+- `unlink` - Identidade desvinculada
+- `setup_totp` - TOTP configurado
+- `verify_totp` - TOTP verificado
+- `password_change` - Senha alterada
+- `password_recovery` - Recuperação de senha
+- `session_revoke` - Sessão revogada
+- `panic_revoke` - Revogação de emergência
+
+Retenção padrão: 90 dias (configurável)
+
+
+# =============================================================================
+# 3. ESTRATÉGIAS CUSTOMIZADAS (CUSTOM PROVIDERS)
+# =============================================================================
+
+## 3.1 Conceito
+
+O Cascata permite criar providers de autenticação CUSTOMIZADOS além dos 
+built-in (email, google). Isso é feito via WEBHOOKS.
+
+Casos de uso:
+- **CPF brasileiro**: Login via CPF + senha/OTP
+- **Biometria**: Integração com sistemas de biometria
+- **Documentos**: Login via número de documento (RG, CNH)
+- **Redes sociais custom**: WeChat, Line, etc.
+
+## 3.2 Configuração
+
+Estrutura armazenada em `project.metadata.auth_strategies`:
+
+```json
+{
+  "auth_strategies": {
+    "cpf": {
+      "enabled": true,
+      "webhook_url": "https://api.validador-cpf.io/cascata/challenge",
+      
+      "otp_config": {
+        "length": 4,
+        "charset": "numeric",
+        "expiration_minutes": 5,
+        "regex_validation": "^\\d{3}\\.?\\d{3}\\.?\\d{3}\\-?\\d{2}$"
+      },
+      
+      "template_bindings": {
+        "otp_challenge": "tpl_cpf_otp_001",
+        "login_alert": "tpl_cpf_alert_001"
+      },
+      
+      "require_otp_on_update": true,
+      "otp_dispatch_mode": "auto_current",
+      
+      "jwt_expiration": "2h",
+      "refresh_validity_days": 30,
+      
+      "rules": [
+        {
+          "origin": "https://app.banco.com",
+          "require_password": false,
+          "require_otp": true,
+          "auto_login": true
+        },
+        {
+          "origin": "*.externo.banco.com",
+          "require_password": true,
+          "require_otp": true,
+          "require_totp": true
+        }
+      ]
+    }
+  }
+}
+```
+
+## 3.3 OTP Config
+
+```typescript
+interface OtpConfig {
+  length?: number;                    // 4, 6, 8, 10 (padrão: 6)
+  charset?: 'numeric' | 'alphanumeric' | 'alpha' | 'hex';
+  expiration_minutes?: number;        // TTL do código (padrão: 15)
+  regex_validation?: string;          // Regex para validar identifier
+}
+```
+
+Geração de código (AuthService.ts):
+```typescript
+function generateOtpCode(config: OtpConfig): string {
+  const length = config.length || 6;
+  const charset = config.charset || 'numeric';
+  
+  const charsets = {
+    numeric: '0123456789',
+    alphanumeric: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+    alpha: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+    hex: '0123456789abcdef'
+  };
+  
+  const chars = charsets[charset];
+  let code = '';
+  for (let i = 0; i < length; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+```
+
+## 3.4 Webhook Challenge
+
+Disparado quando `initiatePasswordless()` é chamado.
+
+Request do Cascata:
+```http
+POST {webhook_url}
+Content-Type: application/json
+X-Cascata-Signature: hmac_sha256(jwt_secret, payload)
+X-Cascata-Event: auth.challenge_request
+X-Cascata-Provider: cpf
+
+{
+  "event": "auth.challenge_request",
+  "provider": "cpf",
+  "identifier": "123.456.789-00",
+  "code": "7392",
+  "code_hash": "sha256:abc...",
+  "expires_at": "2026-04-06T18:45:00Z",
+  "template_bindings": {
+    "subject": "Seu código de acesso - Banco XYZ",
+    "body": "Olá {{ .Name }}, seu código é: {{ .Code }}"
+  },
+  "language": "pt-BR",
+  "project_slug": "banco-producao",
+  "timestamp": "2026-04-06T18:30:00Z"
+}
+```
+
+Resposta esperada (200 OK):
+```json
+{
+  "success": true,
+  "message_id": "msg_123456",
+  "channel": "whatsapp"
+}
+```
+
+O webhook externo deve:
+1. Validar a assinatura HMAC
+2. Enviar o código via canal apropriado (SMS/WhatsApp/Email)
+3. Retornar sucesso/falha
+
+## 3.5 Modos de OTP Dispatch
+
+| Modo | Descrição |
+|------|-----------|
+| `delegated` | Retorna 403 com lista de canais, frontend escolhe |
+| `auto_current` | Envia automaticamente para o provider atual (ex: SMS para telefone) |
+| `auto_primary` | Envia para o email principal da conta |
+
+Implementação (GoTrueService.ts):
+```typescript
+if (strategyConfig.otp_dispatch_mode === 'delegated') {
+  // Retorna erro com canais disponíveis
+  throw { code: 'otp_delegated', channels: ['sms', 'whatsapp', 'email'] };
+} else if (strategyConfig.otp_dispatch_mode === 'auto_current') {
+  // Dispara webhook automaticamente
+  await dispatchWebhook(strategyConfig.webhook_url, payload);
+}
+```
+
+
+# =============================================================================
+# 4. FLUXO UNIVERSAL DE LOGIN
+# =============================================================================
+
+## 4.1 Endpoint
+
+```
+POST /api/data/{slug}/auth/token
+```
+
+## 4.2 Request Completo
+
+```json
+{
+  "grant_type": "password",
+  "provider": "cpf",
+  "identifier": "123.456.789-00",
+  "password": "minhaSenha123",
+  "otp_code": "7392",
+  "totp_code": "123456",
+  "language": "pt-BR",
+  "device_fingerprint": "a1b2c3d4..."
+}
+```
+
+Campos:
+- `grant_type`: 'password' | 'refresh_token' | 'id_token' | 'magic_link'
+- `provider`: Provider a usar (email, cpf, google, etc)
+- `identifier`: Identificador (email, CPF, telefone)
+- `password`: Senha (se necessário pela policy)
+- `otp_code`: Código OTP (se passwordless ou MFA)
+- `totp_code`: Código TOTP (se MFA com TOTP)
+- `language`: Idioma para templates (i18n)
+- `device_fingerprint`: Fingerprint do dispositivo
+
+## 4.3 Response de Sucesso
+
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "bearer",
+  "expires_in": 3600,
+  "expires_at": 1712345678,
+  "refresh_token": "cascata_rt_abc123xyz789...",
+  "user": {
+    "id": "usr_abc123",
+    "aud": "authenticated",
+    "role": "authenticated",
+    "email": "joao@email.com",
+    "email_confirmed_at": "2026-01-15T10:30:00Z",
+    "last_sign_in_at": "2026-04-06T18:30:00Z",
+    "app_metadata": {
+      "provider": "cpf",
+      "providers": ["email", "cpf", "totp"]
+    },
+    "user_metadata": {
+      "email": "joao@email.com",
+      "name": "João Silva"
+    },
+    "identities": [
+      {
+        "id": "idt_1",
+        "provider": "email",
+        "identifier": "joao@email.com",
+        "identity_data": {},
+        "created_at": "2026-01-15T10:00:00Z",
+        "verified_at": "2026-01-15T10:30:00Z"
+      },
+      {
+        "id": "idt_2",
+        "provider": "cpf",
+        "identifier": "123.456.789-00",
+        "identity_data": { "nome": "João Silva" },
+        "created_at": "2026-01-15T10:00:00Z",
+        "verified_at": "2026-01-15T10:30:00Z"
+      },
+      {
+        "id": "idt_3",
+        "provider": "totp",
+        "identifier": "JBSWY3DPEHPK3PXP",
+        "created_at": "2026-03-01T14:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+## 4.4 Response de Erro - MFA Required
+
+```json
+{
+  "error": "totp_required",
+  "message": "Authenticator code required (TOTP)",
+  "provider": "cpf",
+  "identifier": "123.456.789-00",
+  "mfa_type": "totp"
+}
+```
+
+Ou para OTP:
+```json
+{
+  "error": "otp_required",
+  "message": "OTP code required",
+  "provider": "cpf",
+  "identifier": "123.456.789-00"
+}
+```
+
+## 4.5 Fluxo Interno Detalhado (8 Passos)
+
+### PASSO 1: FIREWALL (Dragonfly Check)
+
+Local: `RateLimitService.checkAuthLockout()`
+
+```typescript
+async checkAuthLockout(slug, ip, identifier, config): Promise<{ locked, reason }> {
+  const strategy = config.strategy || 'hybrid';
+  const maxAttempts = config.max_attempts || 5;
+  
+  // 1. IP-Level Check (heurística: 3x = spraying attack)
+  if (strategy === 'hybrid' || strategy === 'ip') {
+    const ipKey = `lockout:ip:${slug}:${ip}`;
+    const ipStrikes = parseInt(await dragonfly.get(ipKey) || '0');
+    if (ipStrikes >= (maxAttempts * 3)) {
+      return { 
+        locked: true, 
+        reason: `Too many failed attempts from your network. Locked for ${config.lockout_minutes} minutes.` 
+      };
+    }
+  }
+  
+  // 2. Identifier-Level Check
+  if (identifier && (strategy === 'hybrid' || strategy === 'identifier')) {
+    const idKey = `lockout:id:${slug}:${identifier}`;
+    const idStrikes = parseInt(await dragonfly.get(idKey) || '0');
+    if (idStrikes >= maxAttempts) {
+      return { 
+        locked: true, 
+        reason: `Too many failed attempts for this account. Locked for ${config.lockout_minutes} minutes.` 
+      };
+    }
+  }
+  
+  return { locked: false };
+}
+```
+
+### PASSO 2: PANIC REVOCATION CHECK
+
+Local: `DataAuthController.legacyToken()`
+
+```sql
+-- Verifica neutralização
+SELECT metadata->>'reason' as reason 
+FROM auth.panic_revocations 
+WHERE (target_type = 'user' AND target_value = $identifier)
+   OR (target_type = 'global' AND target_value = 'ALL')
+   OR (target_type = 'provider' AND target_value = $provider)
+ORDER BY created_at DESC 
+LIMIT 1;
+```
+
+E cache Dragonfly:
+```
+GET panic:{slug}:{userId}
+GET panic:{slug}
+```
+
+Se encontrado:
+```json
+{
+  "error": "neutralized",
+  "message": "User access neutralized by Sovereign Panic Signal",
+  "reason": "Conta comprometida - revogação de emergência"
+}
+```
+
+### PASSO 3: SOVEREIGN POLICY RESOLUTION
+
+Local: `AuthService.resolveSovereignPolicy()`
+
+Algoritmo completo:
+```typescript
+async resolveSovereignPolicy(pool, projectConfig, provider, origin, context) {
+  const authConfig = projectConfig?.auth_config || {};
+  const strategyConfig = authConfig.auth_strategies?.[provider] || {};
+  
+  // Priority 1: Strategy Rules (metadata.rules)
+  if (strategyConfig.rules) {
+    for (const rule of strategyConfig.rules) {
+      if (matchesOrigin(rule.origin, origin)) {
+        return {
+          name: `Strategy Rule: ${rule.origin}`,
+          require_password: rule.require_password ?? true,
+          require_otp: rule.require_otp ?? false,
+          require_user_mfa_choice: rule.require_user_mfa_choice ?? false,
+          auto_login: rule.auto_login ?? false,
+          priority: 1000
+        };
+      }
+    }
+  }
+  
+  // Priority 2: Database Policies
+  const result = await pool.query(`
+    SELECT * FROM auth.policies 
+    WHERE active = true 
+      AND (provider IS NULL OR provider = $1)
+      AND (origin IS NULL OR $2 LIKE origin)
+    ORDER BY priority DESC
+    LIMIT 1
+  `, [provider, origin]);
+  
+  if (result.rows.length > 0) {
+    return result.rows[0];
+  }
+  
+  // Fallback: Default policy
+  return {
+    name: 'Default',
+    require_password: true,
+    require_otp: false,
+    priority: 0
+  };
+}
+```
+
+Matching de Origin (suporta wildcard):
+```typescript
+function matchesOrigin(pattern: string, origin: string): boolean {
+  if (pattern === origin) return true;
+  if (pattern.endsWith('*')) {
+    const prefix = pattern.slice(0, -1);
+    return origin.startsWith(prefix);
+  }
+  if (pattern.includes('*.')) {
+    const regex = new RegExp(pattern.replace(/\*\./, '.*\\.'));
+    return regex.test(origin);
+  }
+  return false;
+}
+```
+
+### PASSO 4: CREDENTIAL VALIDATION
+
+Local: `GoTrueService.handleToken()`
+
+```typescript
+// Busca identity
+const idRes = await pool.query(
+  `SELECT * FROM auth.identities WHERE provider = $1 AND identifier = $2`,
+  [provider, identifier]
+);
+
+if (idRes.rows.length === 0) {
+  throw new Error("Invalid login credentials");
+}
+
+const identity = idRes.rows[0];
+
+// Verifica se usuário está banido
+const userCheck = await pool.query(
+  `SELECT banned FROM auth.users WHERE id = $1`, 
+  [identity.user_id]
+);
+if (userCheck.rows[0]?.banned) {
+  throw new Error("Invalid login credentials");
+}
+
+// Verifica confirmação
+if ((strategyConfig.confirmation || authConfig.email_confirmation) && !identity.verified_at) {
+  throw new Error("Identity not confirmed");
+}
+
+// Valida senha (se necessário)
+if (policy.require_password) {
+  if (!identity.password_hash) {
+    throw new Error("Invalid login credentials");
+  }
+  const match = await bcrypt.compare(password, identity.password_hash);
+  if (!match) {
+    // Registra falha para lockout
+    await RateLimitService.registerAuthFailure(slug, ip, identifier, config);
+    throw new Error("Invalid login credentials");
+  }
+}
+```
+
+### PASSO 5: MFA VERIFICATION
+
+Local: `GoTrueService.handleToken()` (continuação)
+
+```typescript
+// Verifica se MFA é requerido
+const mfaRequired = policy.require_otp === true || 
+  (policy.require_user_mfa_choice === true && userHasMFA);
+
+if (mfaRequired) {
+  // Verifica se usuário tem TOTP configurado
+  const totpRes = await pool.query(
+    `SELECT identifier FROM auth.identities 
+     WHERE user_id = $1 AND provider = 'totp' LIMIT 1`,
+    [identity.user_id]
+  );
+  
+  if (totpRes.rows.length > 0) {
+    // Usuário tem TOTP - verifica código
+    if (!totp_code) {
+      const err: any = new Error("MFA Code Required (TOTP)");
+      err.code = "mfa_required";
+      throw err;
+    }
+    
+    const isValid = await AuthService.verifyTOTP(
+      totpRes.rows[0].identifier, 
+      totp_code
+    );
+    
+    if (!isValid) {
+      await AuthService.logAuthEvent(pool, identity.user_id, 'login_gotrue', 
+        provider, identifier, origin, ip, 'failure', 'gotrue_mfa', 
+        { error: 'invalid_totp' });
+      throw new Error("Invalid MFA Code");
+    }
+  } else {
+    // Sem TOTP - verifica OTP normal
+    if (!otp_code) {
+      throw { code: 'otp_required', provider, identifier };
+    }
+    // Validação de OTP...
+  }
+}
+```
+
+### PASSO 6: SESSION CREATION
+
+Local: `AuthService.createSession()`
+
+```typescript
+async createSession(userId, pool, jwtSecret, ttl = '1h', refreshDays = 30, 
+                    provider, deviceInfo) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // 1. Gera Access Token (JWT)
+    const now = Math.floor(Date.now() / 1000);
+    const expiresIn = parseDuration(ttl);
+    
+    const payload = {
+      sub: userId,
+      role: 'authenticated',
+      aud: 'authenticated',
+      provider: provider,
+      identifier: identifier,
+      fpt: deviceInfo.fingerprint?.slice(0, 16) || 'unknown',
+      iat: now,
+      exp: now + expiresIn,
+      app_metadata: { provider }
+    };
+    
+    const accessToken = jwt.sign(payload, jwtSecret, { algorithm: 'HS256' });
+    
+    // 2. Gera Refresh Token
+    const refreshToken = generateRandomToken(40); // 40 chars URL-safe
+    const refreshHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    
+    // 3. Armazena refresh token
+    const fpBase = `${deviceInfo.ip}|${deviceInfo.userAgent}|${deviceInfo.fingerprint}`;
+    const fpHash = crypto.createHash('sha256').update(fpBase).digest('hex');
+    
+    await client.query(`
+      INSERT INTO auth.refresh_tokens (
+        token_hash, user_id, expires_at, 
+        ip_address, user_agent, fingerprint_hash
+      ) VALUES ($1, $2, NOW() + INTERVAL '${refreshDays} days', $3, $4, $5)
+    `, [refreshHash, userId, deviceInfo.ip, deviceInfo.userAgent, fpHash]);
+    
+    await client.query('COMMIT');
+    
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      expires_in: expiresIn,
+      user: await getUserWithIdentities(pool, userId)
+    };
+  } finally {
+    client.release();
+  }
+}
+```
+
+### PASSO 7: AUDIT LOG
+
+Local: `AuthService.logAuthEvent()`
+
+```typescript
+async logAuthEvent(pool, userId, event, provider, identifier, origin, 
+                   ip, status, policyName, metadata = {}) {
+  await pool.query(`
+    INSERT INTO auth.audit_log (
+      user_id, event, provider, identifier, origin,
+      ip_address, status, policy_name, metadata
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+  `, [userId, event, provider, identifier, origin, ip, status, policyName, 
+      JSON.stringify(metadata)]);
+}
+```
+
+Chamado em:
+- Login bem-sucedido: `logAuthEvent(..., 'login', ..., 'success', ...)`
+- Login falho: `logAuthEvent(..., 'login', ..., 'failure', ...)`
+- MFA falho: `logAuthEvent(..., 'login_gotrue', ..., 'failure', 'gotrue_mfa', ...)`
+
+### PASSO 8: CLEAR FAILURES
+
+Local: Final do login bem-sucedido
+
+```typescript
+// Limpa strikes de lockout
+await RateLimitService.clearAuthFailure(slug, ip, identifier);
+```
+
+Isso remove as chaves:
+- `lockout:ip:{slug}:{ip}`
+- `lockout:id:{slug}:{identifier}`
+
+
+# =============================================================================
+# 5. MFA / TOTP (RFC 6238)
+# =============================================================================
+
+## 5.1 Setup TOTP
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/orchestration/totp/setup
+Authorization: Bearer {access_token}
+```
+
+### Fluxo Interno
+
+1. **Gera segredo** (AuthService.generateTOTPSecret):
+```typescript
+function generateTOTPSecret(): string {
+  // 20 bytes = 160 bits = 32 chars Base32
+  const bytes = crypto.randomBytes(20);
+  return base32Encode(bytes);
+}
+```
+
+2. **Cria URL otpauth**:
+```typescript
+const otpauthUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${encodeURIComponent(label)}?` +
+  `secret=${secret}&` +
+  `issuer=${encodeURIComponent(issuer)}&` +
+  `algorithm=SHA1&` +
+  `digits=6&` +
+  `period=30`;
+```
+
+3. **Armazena como pending**:
+```sql
+UPDATE auth.users 
+SET raw_user_meta_data = jsonb_set(
+  raw_user_meta_data,
+  '{totp_pending_secret}',
+  to_jsonb($1)
+)
+WHERE id = $2
+```
+
+### Response
+```json
+{
+  "secret": "JBSWY3DPEHPK3PXP",
+  "qr_url": "otpauth://totp/Cascata:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Cascata"
+}
+```
+
+## 5.2 Verify TOTP Enrollment
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/orchestration/totp/verify
+Authorization: Bearer {access_token}
+
+Body: { "code": "123456" }
+```
+
+### Fluxo Interno
+
+1. **Recupera secret pendente**:
+```sql
+SELECT raw_user_meta_data->>'totp_pending_secret' 
+FROM auth.users 
+WHERE id = $1
+```
+
+2. **Valida código** (RFC 6238 / RFC 4226):
+```typescript
+function verifyTOTP(secret: string, code: string): boolean {
+  const counter = Math.floor(Date.now() / 1000 / 30); // 30s period
+  
+  // Verifica janela de ±1 período (clock drift)
+  for (const offset of [-1, 0, 1]) {
+    const expectedCode = generateHOTP(secret, counter + offset);
+    if (timingSafeEqual(code, expectedCode)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function generateHOTP(secret: string, counter: number): string {
+  // 1. Decode Base32
+  const key = base32Decode(secret);
+  
+  // 2. Counter como 8 bytes big-endian
+  const counterBytes = Buffer.alloc(8);
+  counterBytes.writeBigUInt64BE(BigInt(counter));
+  
+  // 3. HMAC-SHA1
+  const hmac = crypto.createHmac('sha1', key);
+  hmac.update(counterBytes);
+  const hash = hmac.digest();
+  
+  // 4. Dynamic Truncation (RFC 4226)
+  const offset = hash[hash.length - 1] & 0x0f;
+  const code = ((hash[offset] & 0x7f) << 24 |
+                (hash[offset + 1] & 0xff) << 16 |
+                (hash[offset + 2] & 0xff) << 8 |
+                (hash[offset + 3] & 0xff)) % 1000000;
+  
+  // 5. Pad to 6 digits
+  return code.toString().padStart(6, '0');
+}
+```
+
+3. **Verifica anti-replay**:
+```sql
+SELECT EXISTS(
+  SELECT 1 FROM auth.used_totp_codes
+  WHERE user_id = $1 AND code = $2
+  AND used_at > NOW() - INTERVAL '5 minutes'
+);
+```
+
+4. **Se válido, finaliza enrollment**:
+```sql
+-- Cria identity TOTP
+INSERT INTO auth.identities (user_id, provider, identifier, identity_data)
+VALUES ($1, 'totp', $2, '{}');
+
+-- Marca MFA habilitado
+UPDATE auth.users 
+SET raw_user_meta_data = jsonb_set(
+  raw_user_meta_data,
+  '{mfa_enabled}',
+  'true'
+),
+raw_user_meta_data = raw_user_meta_data - 'totp_pending_secret'
+WHERE id = $1;
+
+-- Registra uso
+INSERT INTO auth.used_totp_codes (user_id, code) VALUES ($1, $2);
+
+-- Audit log
+INSERT INTO auth.audit_log (user_id, event, status) 
+VALUES ($1, 'setup_totp', 'success');
+```
+
+## 5.3 Validação TOTP no Login
+
+Durante `POST /auth/token`, se policy exigir MFA:
+
+```typescript
+// Verifica se usuário tem TOTP
+const totpRes = await pool.query(`
+  SELECT identifier FROM auth.identities 
+  WHERE user_id = $1 AND provider = 'totp' LIMIT 1
+`, [userId]);
+
+if (totpRes.rows.length > 0) {
+  if (!totp_code) {
+    throw { code: 'mfa_required', message: 'TOTP code required' };
+  }
+  
+  // Verifica anti-replay
+  const usedRes = await pool.query(`
+    SELECT 1 FROM auth.used_totp_codes
+    WHERE user_id = $1 AND code = $2
+    AND used_at > NOW() - INTERVAL '5 minutes'
+  `, [userId, totp_code]);
+  
+  if (usedRes.rows.length > 0) {
+    throw new Error("TOTP code already used");
+  }
+  
+  // Valida código
+  const isValid = await AuthService.verifyTOTP(
+    totpRes.rows[0].identifier, 
+    totp_code
+  );
+  
+  if (!isValid) {
+    throw new Error("Invalid TOTP code");
+  }
+  
+  // Registra uso
+  await pool.query(`
+    INSERT INTO auth.used_totp_codes (user_id, code) VALUES ($1, $2)
+  `, [userId, totp_code]);
+}
+```
+
+
+# =============================================================================
+# 6. PASSWORDLESS / CHALLENGE-RESPONSE
+# =============================================================================
+
+## 6.1 Initiate Challenge
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/challenge
+```
+
+### Request
+```json
+{
+  "provider": "cpf",
+  "identifier": "123.456.789-00",
+  "language": "pt-BR"
+}
+```
+
+### Fluxo Completo
+
+1. **Validação de entrada**:
+```typescript
+if (!strategyConfig.enabled) {
+  throw new Error("Provider not enabled");
+}
+if (!strategyConfig.webhook_url) {
+  throw new Error("Provider not configured for challenges");
+}
+
+// Valida regex se configurado
+if (strategyConfig.otp_config?.regex_validation) {
+  const regex = new RegExp(strategyConfig.otp_config.regex_validation);
+  if (!regex.test(identifier)) {
+    throw new Error("Invalid identifier format");
+  }
+}
+```
+
+2. **Geração de código**:
+```typescript
+const code = generateOtpCode(strategyConfig.otp_config || {});
+const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+```
+
+3. **Upsert no banco**:
+```sql
+INSERT INTO auth.otp_codes (
+  provider, identifier, code_hash, expires_at, metadata, ip_address
+) VALUES ($1, $2, $3, NOW() + INTERVAL '15 minutes', 
+    jsonb_build_object('type', 'challenge'), $4)
+ON CONFLICT (provider, identifier) 
+DO UPDATE SET 
+  code_hash = EXCLUDED.code_hash,
+  expires_at = EXCLUDED.expires_at,
+  attempts = 0,
+  ip_address = EXCLUDED.ip_address,
+  metadata = EXCLUDED.metadata
+```
+
+4. **Dispatch via Webhook**:
+```typescript
+const payload = {
+  event: 'auth.challenge_request',
+  provider,
+  identifier,
+  code,
+  code_hash: `sha256:${codeHash}`,
+  expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+  template_bindings: strategyConfig.template_bindings || {},
+  language: language || 'en-US',
+  project_slug: slug
+};
+
+const signature = crypto
+  .createHmac('sha256', jwtSecret)
+  .update(JSON.stringify(payload))
+  .digest('hex');
+
+await fetch(strategyConfig.webhook_url, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Cascata-Signature': signature,
+    'X-Cascata-Event': 'auth.challenge_request'
+  },
+  body: JSON.stringify(payload)
+});
+```
+
+### Response
+```json
+{ "success": true }
+```
+
+## 6.2 Verify Challenge
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/verify-challenge
+```
+
+### Request
+```json
+{
+  "provider": "cpf",
+  "identifier": "123.456.789-00",
+  "code": "7392",
+  "device_fingerprint": "a1b2c3d4..."
+}
+```
+
+### Fluxo Completo
+
+1. **Firewall**:
+```typescript
+const lockout = await RateLimitService.checkAuthLockout(slug, ip, identifier, config);
+if (lockout.locked) {
+  return { status: 429, error: lockout.reason };
+}
+```
+
+2. **Panic Check**:
+```sql
+SELECT * FROM auth.panic_revocations 
+WHERE target_value IN ($1, $2)
+   OR (target_type = 'global' AND target_value = 'ALL')
+```
+
+3. **Busca código**:
+```sql
+SELECT * FROM auth.otp_codes 
+WHERE provider = $1 
+  AND identifier = $2 
+  AND expires_at > NOW() 
+  AND attempts < 3
+```
+
+4. **Timing-safe comparison**:
+```typescript
+const providedHash = crypto.createHash('sha256').update(code).digest('hex');
+const match = crypto.timingSafeEqual(
+  Buffer.from(providedHash),
+  Buffer.from(stored.code_hash)
+);
+```
+
+5. **Se falhar**:
+```sql
+UPDATE auth.otp_codes 
+SET attempts = attempts + 1 
+WHERE id = $1
+```
+```typescript
+await RateLimitService.registerAuthFailure(slug, ip, identifier, config);
+return { status: 401, error: "Invalid code" };
+```
+
+6. **Se sucesso**:
+```typescript
+// Deleta código (one-time use)
+await pool.query(`DELETE FROM auth.otp_codes WHERE id = $1`, [otpId]);
+
+// Limpa lockout
+await RateLimitService.clearAuthFailure(slug, ip, identifier);
+
+// Cria/atualiza usuário
+const userId = await AuthService.upsertUser(pool, { provider, identifier }, authConfig);
+
+// Cria sessão
+const session = await AuthService.createSession(userId, pool, jwtSecret, ...);
+
+// Audit log
+await AuthService.logAuthEvent(pool, userId, 'login', provider, identifier, 
+  origin, ip, 'success', 'challenge_flow');
+
+return { status: 200, data: session };
+```
+
+
+# =============================================================================
+# 7. GESTÃO DE IDENTIDADES (LINK/UNLINK)
+# =============================================================================
+
+## 7.1 Link Identity
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/users/{userId}/identities
+Authorization: Bearer {access_token}
+```
+
+### Permissões
+- **Usuário autenticado**: Pode linkar em SI MESMO (`req.user.sub === userId`)
+- **service_role**: Pode linkar em qualquer usuário
+
+### Request
+```json
+{
+  "provider": "phone",
+  "identifier": "+5511999999999",
+  "password": "senha_opcional",
+  "otp_code": "123456"
+}
+```
+
+### Fluxo Completo
+
+1. **Security Check**:
+```typescript
+if (req.userRole !== 'service_role' && req.user.sub !== userId) {
+  return {
+    status: 403,
+    error: "Access Denied: You can only link identities to your own account"
+  };
+}
+```
+
+2. **Policy Check**:
+```typescript
+const policy = await resolveSovereignPolicy(pool, projectConfig, 
+  provider, origin, { userId });
+
+if (!policy.active) {
+  return { status: 403, error: "Linking not allowed by policy" };
+}
+```
+
+3. **OTP Validation** (se necessário):
+```typescript
+if (policy.require_otp && req.userRole !== 'service_role') {
+  if (!otp_code) {
+    return { 
+      status: 403, 
+      error: "otp_required",
+      provider,
+      identifier
+    };
+  }
+  
+  const isValid = await AuthService.verifyPasswordless(
+    pool, provider, identifier, otp_code
+  );
+  
+  if (!isValid) {
+    return { status: 401, error: "Invalid OTP" };
+  }
+}
+```
+
+4. **Cria identidade**:
+```sql
+INSERT INTO auth.identities (
+  user_id, provider, identifier, password_hash, created_via_origin, identity_data
+) VALUES ($1, $2, $3, $4, $5, $6)
+```
+
+5. **Audit Log**:
+```sql
+INSERT INTO auth.audit_log (user_id, event, provider, identifier, status, policy_name)
+VALUES ($1, 'link', $2, $3, 'success', $4)
+```
+
+## 7.2 Unlink Identity
+
+### Endpoint
+```
+DELETE /api/data/{slug}/auth/users/{userId}/identities/{identityId}
+Authorization: Bearer {service_key}
+```
+
+### Permissão
+APENAS `service_role`
+
+### Validação de Segurança
+```sql
+-- Conta identidades do usuário
+SELECT COUNT(*) as count 
+FROM auth.identities 
+WHERE user_id = $1;
+
+-- Se count <= 1: NÃO permite deletar
+IF count <= 1 {
+  RETURN { status: 400, error: "Cannot remove the last identity" };
+}
+```
+
+### SQL
+```sql
+DELETE FROM auth.identities 
+WHERE id = $1 AND user_id = $2
+RETURNING provider, identifier;
+```
+
+### Audit Log
+```sql
+INSERT INTO auth.audit_log (user_id, event, provider, identifier, status)
+VALUES ($1, 'unlink', $2, $3, 'success')
+```
+
+
+# =============================================================================
+# 8. GESTÃO DE SESSÕES
+# =============================================================================
+
+## 8.1 Listar Sessões
+
+### Endpoint
+```
+GET /api/data/{slug}/auth/users/{userId}/sessions
+Authorization: Bearer {service_key}
+```
+
+### SQL
+```sql
+SELECT 
+  id,
+  user_agent,
+  ip_address,
+  created_at,
+  expires_at,
+  CASE 
+    WHEN token_hash = $2 THEN true 
+    ELSE false 
+  END as is_current
+FROM auth.refresh_tokens 
+WHERE user_id = $1 
+  AND revoked = false
+  AND expires_at > NOW()
+ORDER BY created_at DESC
+```
+
+### Response
+```json
+[
+  {
+    "id": "rt_uuid_123",
+    "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0...",
+    "ip_address": "192.168.1.1",
+    "created_at": "2026-04-06T10:00:00Z",
+    "expires_at": "2026-05-06T10:00:00Z",
+    "is_current": true
+  },
+  {
+    "id": "rt_uuid_456",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64...",
+    "ip_address": "192.168.1.2",
+    "created_at": "2026-04-05T14:30:00Z",
+    "expires_at": "2026-05-05T14:30:00Z",
+    "is_current": false
+  }
+]
+```
+
+## 8.2 Revogar Outras Sessões
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/users/{userId}/sessions/revoke_others
+Authorization: Bearer {access_token}
+
+Body: { "current_session_id": "rt_uuid_123" }
+```
+
+### SQL
+```sql
+UPDATE auth.refresh_tokens 
+SET revoked = true 
+WHERE user_id = $1 
+  AND id != $2                    -- Mantém a sessão atual
+  AND revoked = false;
+```
+
+### Caso de uso
+"Desconectar todos os outros dispositivos" - útil quando usuário perde 
+um dispositivo ou suspeita de acesso não autorizado.
+
+## 8.3 Revogar Sessão Específica
+
+### Endpoint
+```
+DELETE /api/data/{slug}/auth/users/{userId}/sessions/{sessionId}
+Authorization: Bearer {service_key}
+```
+
+### SQL
+```sql
+UPDATE auth.refresh_tokens 
+SET revoked = true 
+WHERE id = $1 
+  AND user_id = $2;
+```
+
+## 8.4 Refresh Token Rotation
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/token
+
+Body: { "grant_type": "refresh_token", "refresh_token": "rt_abc123..." }
+```
+
+### Fluxo de Rotação Segura
+
+```typescript
+async refreshSession(refreshToken, pool, jwtSecret, ttl, deviceInfo) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // 1. Hash do token recebido
+    const oldHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    
+    // 2. Busca token no banco
+    const tokenRes = await client.query(`
+      SELECT * FROM auth.refresh_tokens 
+      WHERE token_hash = $1 
+        AND revoked = false 
+        AND expires_at > NOW()
+    `, [oldHash]);
+    
+    if (tokenRes.rows.length === 0) {
+      throw new Error("Invalid refresh token");
+    }
+    
+    const oldToken = tokenRes.rows[0];
+    
+    // 3. Verifica fingerprint (anti-hijacking)
+    const fpBase = `${deviceInfo.ip}|${deviceInfo.userAgent}|${deviceInfo.fingerprint}`;
+    const fpHash = crypto.createHash('sha256').update(fpBase).digest('hex');
+    
+    if (oldToken.fingerprint_hash && 
+        !timingSafeEqual(oldToken.fingerprint_hash, fpHash)) {
+      // Possível hijacking! Revoga tudo.
+      await client.query(`
+        UPDATE auth.refresh_tokens 
+        SET revoked = true 
+        WHERE user_id = $1
+      `, [oldToken.user_id]);
+      await client.query('COMMIT');
+      throw new Error("Security violation: session hijacking detected");
+    }
+    
+    // 4. Gera novo token
+    const newToken = generateRandomToken(40);
+    const newHash = crypto.createHash('sha256').update(newToken).digest('hex');
+    
+    // 5. Marca antigo como revoked, insere novo
+    await client.query(`
+      UPDATE auth.refresh_tokens 
+      SET revoked = true 
+      WHERE id = $1
+    `, [oldToken.id]);
+    
+    await client.query(`
+      INSERT INTO auth.refresh_tokens (
+        token_hash, user_id, parent_token, expires_at,
+        ip_address, user_agent, fingerprint_hash
+      ) VALUES ($1, $2, $3, NOW() + INTERVAL '30 days', $4, $5, $6)
+    `, [newHash, oldToken.user_id, oldToken.id, deviceInfo.ip, 
+        deviceInfo.userAgent, fpHash]);
+    
+    // 6. Gera novo access token
+    const accessToken = generateJWT(oldToken.user_id, jwtSecret, ttl);
+    
+    await client.query('COMMIT');
+    
+    return {
+      access_token: accessToken,
+      refresh_token: newToken,
+      expires_in: parseDuration(ttl)
+    };
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+```
+
+## 8.5 Logout Seguro (Blacklist)
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/logout
+Authorization: Bearer {access_token}
+```
+
+### Fluxo
+
+```typescript
+async handleLogout(pool, accessToken, jwtSecret) {
+  try {
+    // Decodifica sem verificar (pode estar expirado)
+    const decoded: any = jwt.verify(accessToken, jwtSecret, { 
+      algorithms: ['HS256'] 
+    });
+    
+    if (!decoded || !decoded.sub) return;
+    
+    // Calcula TTL restante
+    const now = Math.floor(Date.now() / 1000);
+    const ttl = decoded.exp - now;
+    
+    if (ttl > 0) {
+      // Adiciona à blacklist no Dragonfly
+      const tokenHash = crypto.createHash('sha256').update(accessToken).digest('hex');
+      await dragonfly.set(
+        `blacklist:jwt:${tokenHash}`, 
+        'revoked', 
+        'EX', 
+        ttl
+      );
+    }
+    
+    return { success: true };
+  } catch (e) {
+    // Token inválido = já está "logout"
+    return { success: true };
+  }
+}
+```
+
+### Verificação em Cada Request
+
+Middleware de auth verifica blacklist:
+```typescript
+async function verifyToken(token, jwtSecret) {
+  // 1. Verifica se está na blacklist
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const isBlacklisted = await dragonfly.exists(`blacklist:jwt:${tokenHash}`);
+  
+  if (isBlacklisted) {
+    throw new Error("Token has been revoked");
+  }
+  
+  // 2. Verifica assinatura e expiração
+  return jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
+}
+```
+
+
+# =============================================================================
+# 9. SMART LOCKOUT & PANIC MODE
+# =============================================================================
+
+## 9.1 Configuração
+
+```json
+{
+  "auth_config": {
+    "security": {
+      "max_attempts": 5,
+      "lockout_minutes": 15,
+      "strategy": "hybrid"
+    }
+  }
+}
+```
+
+Estratégias:
+- `ip`: Lock apenas por IP
+- `identifier`: Lock apenas por identificador
+- `hybrid`: Ambos (recomendado)
+- `email`: Lock apenas para providers de email
+
+## 9.2 Implementação (Dragonfly)
+
+### Keys
+```
+lockout:ip:{slug}:{ip_address}       -> número de strikes
+lockout:id:{slug}:{identifier}         -> número de strikes
+```
+
+### Check
+```typescript
+async checkAuthLockout(slug, ip, identifier, config) {
+  const strategy = config.strategy || 'hybrid';
+  const maxAttempts = config.max_attempts || 5;
+  const lockoutMinutes = config.lockout_minutes || 15;
+  
+  // IP-Level
+  if (strategy === 'hybrid' || strategy === 'ip') {
+    const ipKey = `lockout:ip:${slug}:${ip}`;
+    const ipStrikes = parseInt(await dragonfly.get(ipKey) || '0');
+    
+    // Heurística: 3x max = spraying attack
+    if (ipStrikes >= (maxAttempts * 3)) {
+      return {
+        locked: true,
+        reason: `Network locked due to suspicious activity. Try again in ${lockoutMinutes} minutes.`,
+        retry_after: lockoutMinutes * 60
+      };
+    }
+  }
+  
+  // Identifier-Level
+  if (identifier && (strategy === 'hybrid' || strategy === 'identifier')) {
+    const idKey = `lockout:id:${slug}:${identifier}`;
+    const idStrikes = parseInt(await dragonfly.get(idKey) || '0');
+    
+    if (idStrikes >= maxAttempts) {
+      return {
+        locked: true,
+        reason: `Account locked due to too many failed attempts. Try again in ${lockoutMinutes} minutes.`,
+        retry_after: lockoutMinutes * 60
+      };
+    }
+  }
+  
+  return { locked: false };
+}
+```
+
+### Register Failure
+```typescript
+async registerAuthFailure(slug, ip, identifier, config) {
+  const lockoutSeconds = (config.lockout_minutes || 15) * 60;
+  
+  const multi = dragonfly.multi();
+  
+  // Incrementa strikes
+  multi.incr(`lockout:ip:${slug}:${ip}`);
+  multi.expire(`lockout:ip:${slug}:${ip}`, lockoutSeconds);
+  
+  if (identifier) {
+    multi.incr(`lockout:id:${slug}:${identifier}`);
+    multi.expire(`lockout:id:${slug}:${identifier}`, lockoutSeconds);
+  }
+  
+  await multi.exec();
+}
+```
+
+### Clear Failure
+```typescript
+async clearAuthFailure(slug, ip, identifier) {
+  const multi = dragonfly.multi();
+  multi.del(`lockout:ip:${slug}:${ip}`);
+  if (identifier) {
+    multi.del(`lockout:id:${slug}:${identifier}`);
+  }
+  await multi.exec();
+}
+```
+
+## 9.3 Panic Revocation
+
+### Endpoint
+```
+POST /api/data/{slug}/auth/orchestration/panic
+Authorization: Bearer {service_key}
+
+Body:
+{
+  "target_type": "user",
+  "target_value": "joao@email.com",
+  "reason": "Conta comprometida"
+}
+```
+
+### Implementação
+
+```typescript
+async panicRevocation(pool, dragonfly, slug, targetType, targetValue, reason) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    
+    // 1. Registra revogação
+    await client.query(`
+      INSERT INTO auth.panic_revocations (target_type, target_value, metadata)
+      VALUES ($1, $2, $3)
+    `, [targetType, targetValue, JSON.stringify({ reason })]);
+    
+    // 2. Executa ações por tipo
+    switch (targetType) {
+      case 'user':
+        // Encontra user_id
+        const userRes = await client.query(`
+          SELECT u.id FROM auth.users u
+          JOIN auth.identities i ON u.id = i.user_id
+          WHERE i.identifier = $1
+        `, [targetValue]);
+        
+        if (userRes.rows.length > 0) {
+          const userId = userRes.rows[0].id;
+          
+          // Revoga tokens
+          await client.query(`
+            UPDATE auth.refresh_tokens 
+            SET revoked = true 
+            WHERE user_id = $1
+          `, [userId]);
+          
+          // Set no Dragonfly (24h)
+          await dragonfly.set(
+            `panic:user:${slug}:${userId}`,
+            'true',
+            'EX',
+            86400
+          );
+        }
+        break;
+        
+      case 'origin':
+        await dragonfly.set(
+          `panic:origin:${slug}:${targetValue}`,
+          'true',
+          'EX',
+          86400
+        );
+        break;
+        
+      case 'provider':
+        await dragonfly.set(
+          `panic:provider:${slug}:${targetValue}`,
+          'true',
+          'EX',
+          86400
+        );
+        break;
+        
+      case 'global':
+        // Revoga TUDO
+        await client.query(`
+          UPDATE auth.refresh_tokens SET revoked = true
+        `);
+        await dragonfly.set(
+          `panic:${slug}`,
+          'true',
+          'EX',
+          86400
+        );
+        break;
+    }
+    
+    await client.query('COMMIT');
+    
+    return { success: true };
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+```
+
+### Verificação em Cada Login
+
+```typescript
+async checkNeutralized(pool, dragonfly, slug, identifier, provider, userId) {
+  // 1. Verifica PostgreSQL (persistente)
+  const panicRes = await pool.query(`
+    SELECT metadata->>'reason' as reason
+    FROM auth.panic_revocations
+    WHERE (target_type = 'user' AND target_value = $1)
+       OR (target_type = 'global' AND target_value = 'ALL')
+       OR (target_type = 'provider' AND target_value = $2)
+    ORDER BY created_at DESC
+    LIMIT 1
+  `, [identifier, provider]);
+  
+  if (panicRes.rows.length > 0) {
+    return {
+      neutralized: true,
+      reason: panicRes.rows[0].reason
+    };
+  }
+  
+  // 2. Verifica Dragonfly (cache rápido)
+  if (userId) {
+    const isUserNeutralized = await dragonfly.get(`panic:user:${slug}:${userId}`);
+    if (isUserNeutralized === 'true') {
+      return { neutralized: true, reason: "User neutralized" };
+    }
+  }
+  
+  const isGlobalPanic = await dragonfly.get(`panic:${slug}`);
+  if (isGlobalPanic === 'true') {
+    return { neutralized: true, reason: "Global panic mode active" };
+  }
+  
+  return { neutralized: false };
+}
+```
+
+
+# =============================================================================
+# 10. DEVICE FINGERPRINTING
+# =============================================================================
+
+## 10.1 Geração no Frontend
+
+```typescript
+function generateDeviceFingerprint(): string {
+  const components = [
+    navigator.userAgent,
+    navigator.language,
+    screen.colorDepth,
+    `${screen.width}x${screen.height}`,
+    new Date().getTimezoneOffset(),
+    !!window.sessionStorage,
+    !!window.localStorage,
+    navigator.hardwareConcurrency,
+    navigator.platform
+  ];
+  
+  // Simple hash (não precisa ser criptográfico, apenas único)
+  const str = components.join('|');
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16);
+}
+```
+
+## 10.2 Geração no Backend
+
+```typescript
+function computeFingerprintHash(deviceInfo) {
+  const fpBase = `${deviceInfo.ip}|${deviceInfo.userAgent}|${deviceInfo.fingerprint}`;
+  return crypto.createHash('sha256').update(fpBase).digest('hex');
+}
+```
+
+## 10.3 Uso no JWT
+
+```json
+{
+  "sub": "usr_abc123",
+  "role": "authenticated",
+  "fpt": "a1b2c3d4e5f6789a",  // 16 chars do hash
+  "iat": 1712345678,
+  "exp": 1712349278
+}
+```
+
+## 10.4 Validação na Refresh
+
+```typescript
+// Recupera fingerprint armazenado
+const storedFp = await pool.query(`
+  SELECT fingerprint_hash FROM auth.refresh_tokens 
+  WHERE token_hash = $1
+`, [tokenHash]);
+
+// Calcula fingerprint atual
+const currentFp = computeFingerprintHash(deviceInfo);
+
+// Comparação segura contra timing attacks
+if (storedFp && !timingSafeEqual(storedFp, currentFp)) {
+  // Possível hijacking! Revoga sessão.
+  await pool.query(`
+    UPDATE auth.refresh_tokens 
+    SET revoked = true 
+    WHERE token_hash = $1
+  `, [tokenHash]);
+  
+  throw new Error("Security violation: device mismatch detected");
+}
+```
+
+
+# =============================================================================
+# 11. CRIPTOGRAFIA DE PAYLOAD (LOGIN SEGURO)
+# =============================================================================
+
+## 11.1 Visão Geral
+
+Protocolo: **ECDH P-256 + HKDF + AES-256-GCM**
+
+Objetivo: Proteger credenciais durante transmissão, mesmo com TLS.
+
+## 11.2 Fluxo Completo
+
+### Passo 1: Handshake
+
+**Request:**
+```
+GET /api/control/{slug}/auth/handshake
+```
+
+**Response:**
+```json
+{
+  "sessionId": "sess_abc123xyz",
+  "serverPublicKey": "base64(spki)",
+  "serverFingerprint": "sha256:a1b2c3..."
+}
+```
+
+Geração no backend:
+```typescript
+// Gera par de chaves efêmero
+const keyPair = await crypto.subtle.generateKey(
+  { name: 'ECDH', namedCurve: 'P-256' },
+  false,  // extractable: false
+  ['deriveBits']
+);
+
+// Exporta chave pública como SPKI
+const publicKeySpki = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+
+// Armazena chave privada em memória/cache (TTL 5 min)
+await cache.set(`handshake:${sessionId}:privateKey`, keyPair.privateKey, 300);
+```
+
+### Passo 2: Derivação de Chave (Frontend)
+
+```typescript
+// 1. Importa chave pública do servidor
+const serverPublicKey = await crypto.subtle.importKey(
+  'spki',
+  base64ToArrayBuffer(serverPublicKeyBase64),
+  { name: 'ECDH', namedCurve: 'P-256' },
+  false,
+  []
+);
+
+// 2. Gera par de chaves efêmero do cliente
+const clientKeyPair = await crypto.subtle.generateKey(
+  { name: 'ECDH', namedCurve: 'P-256' },
+  false,
+  ['deriveBits']
+);
+
+// 3. Deriva bits compartilhados
+const sharedBits = await crypto.subtle.deriveBits(
+  { name: 'ECDH', public: serverPublicKey },
+  clientKeyPair.privateKey,
+  256
+);
+
+// 4. HKDF para chave AES
+const aesKey = await crypto.subtle.deriveKey(
+  {
+    name: 'HKDF',
+    hash: 'SHA-256',
+    salt: new Uint8Array(0),
+    info: new TextEncoder().encode(`cascata-v2-${serverFingerprint}`)
+  },
+  await crypto.subtle.importKey('raw', sharedBits, 'HKDF', false, ['deriveKey']),
+  { name: 'AES-GCM', length: 256 },
+  false,
+  ['encrypt', 'decrypt']
+);
+```
+
+### Passo 3: Cifragem
+
+```typescript
+const plaintext = JSON.stringify({
+  identifier: "joao@email.com",
+  password: "senha123",
+  _ts: Date.now()  // Anti-replay
+});
+
+const iv = crypto.getRandomValues(new Uint8Array(12));
+const encoded = new TextEncoder().encode(plaintext);
+
+// Encrypt
+const ciphertextWithTag = await crypto.subtle.encrypt(
+  { name: 'AES-GCM', iv },
+  aesKey,
+  encoded
+);
+
+// Separa ciphertext e auth tag
+const ciphertext = ciphertextWithTag.slice(0, -16);
+const authTag = ciphertextWithTag.slice(-16);
+```
+
+### Passo 4: Envio
+
+```
+POST /api/control/{slug}/auth/login
+
+Body:
+{
+  "v": "v1",
+  "sessionId": "sess_abc123xyz",
+  "clientPublicKey": "base64(spki)",
+  "iv": "base64(iv)",
+  "authTag": "base64(authTag)",
+  "ciphertext": "base64(ciphertext)",
+  "timestamp": 1712345678000
+}
+```
+
+### Passo 5: Decifragem (Backend)
+
+```typescript
+async function decryptLoginPayload(sessionId, clientPublicKeyBase64, 
+                                   ivBase64, authTagBase64, 
+                                   ciphertextBase64, timestamp) {
+  // 1. Recupera chave privada
+  const privateKey = await cache.get(`handshake:${sessionId}:privateKey`);
+  if (!privateKey) {
+    throw new Error("Handshake expired");
+  }
+  
+  // 2. Importa chave pública do cliente
+  const clientPublicKey = await crypto.subtle.importKey(
+    'spki',
+    base64ToArrayBuffer(clientPublicKeyBase64),
+    { name: 'ECDH', namedCurve: 'P-256' },
+    false,
+    []
+  );
+  
+  // 3. Deriva mesmos bits compartilhados
+  const sharedBits = await crypto.subtle.deriveBits(
+    { name: 'ECDH', public: clientPublicKey },
+    privateKey,
+    256
+  );
+  
+  // 4. Deriva mesma chave AES via HKDF
+  const aesKey = await crypto.subtle.deriveKey(
+    {
+      name: 'HKDF',
+      hash: 'SHA-256',
+      salt: new Uint8Array(0),
+      info: new TextEncoder().encode(`cascata-v2-${serverFingerprint}`)
+    },
+    await crypto.subtle.importKey('raw', sharedBits, 'HKDF', false, ['deriveKey']),
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['decrypt']
+  );
+  
+  // 5. Recompõe e decifra
+  const iv = base64ToArrayBuffer(ivBase64);
+  const authTag = base64ToArrayBuffer(authTagBase64);
+  const ciphertext = base64ToArrayBuffer(ciphertextBase64);
+  
+  // ciphertext || authTag
+  const encrypted = new Uint8Array(ciphertext.length + authTag.length);
+  encrypted.set(ciphertext, 0);
+  encrypted.set(authTag, ciphertext.length);
+  
+  const decrypted = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    aesKey,
+    encrypted
+  );
+  
+  const payload = JSON.parse(new TextDecoder().decode(decrypted));
+  
+  // 6. Valida anti-replay (±90s)
+  const now = Date.now();
+  if (Math.abs(now - payload._ts) > 90000) {
+    throw new Error("Request expired (anti-replay)");
+  }
+  
+  return payload;
+}
+```
+
+### Passo 6: Resposta Cifrada
+
+O backend cifra a resposta (token, user) com a mesma chave AES:
+
+```typescript
+const responsePlaintext = JSON.stringify({
+  token: accessToken,
+  user: userData
+});
+
+const responseIv = crypto.getRandomValues(new Uint8Array(12));
+const responseEncrypted = await crypto.subtle.encrypt(
+  { name: 'AES-GCM', iv: responseIv },
+  aesKey,
+  new TextEncoder().encode(responsePlaintext)
+);
+
+return {
+  iv: arrayBufferToBase64(responseIv),
+  authTag: arrayBufferToBase64(responseEncrypted.slice(-16)),
+  ciphertext: arrayBufferToBase64(responseEncrypted.slice(0, -16))
+};
+```
+
+O frontend decifra e obtém o token.
+
+## 11.3 Proteções
+
+| Proteção | Implementação |
+|----------|---------------|
+| Anti-replay | Timestamp ±90s |
+| Anti-tampering | Auth tag AES-GCM |
+| Forward secrecy | Chaves efêmeras, descartadas após uso |
+| No storage | Chaves nunca persistem em disco |
+| Perfect secrecy | Cada handshake tem chaves únicas |
+
+
+# =============================================================================
+# 12. API REFERENCE COMPLETA
+# =============================================================================
+
+## 12.1 Data Plane (Auth)
+
+| Método | Endpoint | Auth | Descrição |
+|--------|----------|------|-----------|
+| POST | `/api/data/{slug}/auth/token` | anon | Universal Login |
+| POST | `/api/data/{slug}/auth/challenge` | anon | Initiate OTP Challenge |
+| POST | `/api/data/{slug}/auth/verify-challenge` | anon | Verify Challenge + Login |
+| POST | `/api/data/{slug}/auth/signup` | anon | Sign Up |
+| POST | `/api/data/{slug}/auth/logout` | bearer | Logout (blacklist) |
+| GET | `/api/data/{slug}/auth/user` | bearer | Get Current User |
+| PUT | `/api/data/{slug}/auth/user` | bearer | Update User |
+| GET | `/api/data/{slug}/auth/authorize` | anon | OAuth Authorization |
+| GET | `/api/data/{slug}/auth/callback` | anon | OAuth Callback |
+| GET | `/api/data/{slug}/auth/verify` | anon | Verify Magic Link |
+| POST | `/api/data/{slug}/auth/recover` | anon | Password Recovery |
+| POST | `/api/data/{slug}/auth/resend` | anon | Resend Confirmation |
+
+## 12.2 Management Plane
+
+| Método | Endpoint | Auth | Descrição |
+|--------|----------|------|-----------|
+| GET | `/api/data/{slug}/auth/users` | service | List Users |
+| POST | `/api/data/{slug}/auth/users` | service | Create User |
+| POST | `/api/data/{slug}/auth/users/{id}/identities` | service/self | Link Identity |
+| DELETE | `/api/data/{slug}/auth/users/{id}/strategies/{identityId}` | service | Unlink Identity |
+| PATCH | `/api/data/{slug}/auth/users/{id}/status` | service | Ban/Unban |
+| DELETE | `/api/data/{slug}/auth/users/{id}` | service | Delete User |
+| GET | `/api/data/{slug}/auth/users/{id}/sessions` | service | List Sessions |
+| POST | `/api/data/{slug}/auth/users/{id}/sessions/revoke_others` | service | Revoke Others |
+| DELETE | `/api/data/{slug}/auth/users/{id}/sessions/{sessionId}` | service | Revoke Session |
+
+## 12.3 Orchestration Plane
+
+| Método | Endpoint | Auth | Descrição |
+|--------|----------|------|-----------|
+| GET | `/api/data/{slug}/auth/orchestration/policies` | service | List Policies |
+| POST | `/api/data/{slug}/auth/orchestration/policies` | service | Create/Update Policy |
+| DELETE | `/api/data/{slug}/auth/orchestration/policies/{id}` | service | Delete Policy |
+| GET | `/api/data/{slug}/auth/orchestration/totp/setup` | bearer | Setup TOTP |
+| POST | `/api/data/{slug}/auth/orchestration/totp/verify` | bearer | Verify TOTP |
+| POST | `/api/data/{slug}/auth/orchestration/panic` | service | Panic Revocation |
+| GET | `/api/data/{slug}/auth/orchestration/audit` | service | Audit Logs |
+
+## 12.4 Secure Login
+
+| Método | Endpoint | Auth | Descrição |
+|--------|----------|------|-----------|
+| GET | `/api/control/{slug}/auth/handshake` | anon | Get Server Public Key |
+| POST | `/api/control/{slug}/auth/login` | anon | Secure Encrypted Login |
+
+
+# =============================================================================
+# 13. TOKENS E JWT
+# =============================================================================
+
+## 13.1 Access Token (JWT)
+
+Header:
+```json
+{
+  "alg": "HS256",
+  "typ": "JWT"
+}
+```
+
+Claims:
+```json
+{
+  "sub": "usr_abc123",
+  "role": "authenticated",
+  "aud": "authenticated",
+  "identifier": "joao@email.com",
+  "provider": "email",
+  "fpt": "a1b2c3d4...",
+  "iat": 1712345678,
+  "exp": 1712349278,
+  "app_metadata": {
+    "provider": "email",
+    "providers": ["email", "cpf", "totp"]
+  },
+  "user_metadata": {
+    "email": "joao@email.com",
+    "name": "João Silva"
+  }
+}
+```
+
+Roles:
+- `anon`: Usuário não autenticado
+- `authenticated`: Usuário autenticado
+- `service_role`: Acesso administrativo
+
+## 13.2 Refresh Token
+
+- Formato: 40 caracteres URL-safe `[a-zA-Z0-9_-]`
+- Exemplo: `cascata_rt_aB3x9K2mP8nQ5vW7...`
+- Armazenamento: SHA256 hash no banco
+- TTL: 30 dias (configurável por strategy)
+- Rotation: Sim, com detecção de reuso
+- Fingerprint: Vinculado ao dispositivo
+
+## 13.3 API Keys
+
+| Tipo | Uso | Header |
+|------|-----|--------|
+| `anon` | Requests públicas | `apikey: {anon_key}` |
+| `service_role` | Admin/management | `apikey: {service_key}` |
+
+
+# =============================================================================
+# 14. WEBHOOKS
+# =============================================================================
+
+## 14.1 Auth Challenge
+
+**Evento:** `auth.challenge_request`
+**Disparado:** POST /auth/challenge
+
+Request:
+```http
+POST {webhook_url}
+Content-Type: application/json
+X-Cascata-Signature: hmac_sha256(jwt_secret, body)
+X-Cascata-Event: auth.challenge_request
+X-Cascata-Provider: cpf
+
+{
+  "event": "auth.challenge_request",
+  "provider": "cpf",
+  "identifier": "123.456.789-00",
+  "code": "7392",
+  "code_hash": "sha256:abc...",
+  "expires_at": "2026-04-06T18:45:00Z",
+  "template_bindings": {...},
+  "language": "pt-BR",
+  "project_slug": "meu-projeto",
+  "timestamp": "2026-04-06T18:30:00Z"
+}
+```
+
+Response esperada (200):
+```json
+{
+  "success": true,
+  "message_id": "msg_123456",
+  "channel": "whatsapp"
+}
+```
+
+## 14.2 Login Alert
+
+**Evento:** `auth.login_alert`
+**Disparado:** Após login bem-sucedido
+
+```json
+{
+  "event": "auth.login_alert",
+  "user_id": "usr_abc123",
+  "provider": "email",
+  "identifier": "joao@email.com",
+  "ip_address": "192.168.1.1",
+  "user_agent": "Mozilla/5.0...",
+  "timestamp": "2026-04-06T18:30:00Z"
+}
+```
+
+
+# =============================================================================
+# 15. I18N E TEMPLATES
+# =============================================================================
+
+## 15.1 Estrutura
+
+```typescript
+interface MessagingTemplate {
+  id: string;
+  name: string;
+  type: 'confirmation' | 'recovery' | 'magic_link' | 
+        'login_alert' | 'welcome_email' | 'otp_challenge';
+  default_language: string;
+  variants: {
+    "en-US": {
+      subject: string;
+      body: string;
+    };
+    "pt-BR": {
+      subject: string;
+      body: string;
+    };
+  };
+}
+```
+
+## 15.2 Resolução de Idioma
+
+```typescript
+function resolveLanguage(template: MessagingTemplate, requestedLang: string): string {
+  // 1. Idioma exato
+  if (template.variants[requestedLang]) {
+    return requestedLang;
+  }
+  
+  // 2. Base do idioma (pt-BR -> pt)
+  const baseLang = requestedLang.split('-')[0];
+  const matchingLang = Object.keys(template.variants)
+    .find(lang => lang.startsWith(baseLang));
+  if (matchingLang) {
+    return matchingLang;
+  }
+  
+  // 3. Idioma padrão do template
+  if (template.variants[template.default_language]) {
+    return template.default_language;
+  }
+  
+  // 4. Primeiro disponível
+  return Object.keys(template.variants)[0];
+}
+```
+
+## 15.3 Template Bindings
+
+```json
+{
+  "auth_strategies": {
+    "cpf": {
+      "template_bindings": {
+        "confirmation": "tpl_cpf_confirm_001",
+        "recovery": "tpl_cpf_recovery_001",
+        "otp_challenge": "tpl_cpf_otp_001"
+      }
+    }
+  }
+}
+```
+
+
+# =============================================================================
+# 16. DIAGRAMAS DE FLUXO
+# =============================================================================
+
+## 16.1 Universal Login (Texto)
+
+```
+[CLIENTE]                    [BACKEND]                  [DATABASE]
+    |                            |                            |
+    |-- POST /auth/token -------->|                            |
+    |   {provider, identifier}     |                            |
+    |                            |-- 1. Check Lockout          |
+    |                            |   (Dragonfly)               |
+    |                            |                            |
+    |                            |-- 2. Check Panic            |
+    |                            |   (panic_revocations)       |
+    |                            |                            |
+    |                            |-- 3. Resolve Policy         |
+    |                            |   (auth.policies)           |
+    |                            |                            |
+    |                            |-- 4. Validate Credentials   |
+    |                            |   (auth.identities)         |
+    |                            |                            |
+    |                            |-- 5. Verify MFA ------------|
+    |                            |   (TOTP/OTP)                |
+    |                            |                            |
+    |                            |-- 6. Create Session         |
+    |                            |   (JWT + refresh token)     |
+    |                            |                            |
+    |                            |-- 7. Audit Log              |
+    |                            |   (auth.audit_log)          |
+    |                            |                            |
+    |<-- Return JWT --------------|                            |
+    |   {access_token, user}     |                            |
+```
+
+## 16.2 Passwordless Challenge
+
+```
+[CLIENTE]        [BACKEND]         [DATABASE]      [WEBHOOK EXTERNO]
+    |                |                    |                  |
+    |-- Challenge -->|                    |                  |
+    |                |-- Generate OTP       |                  |
+    |                |-- Store in DB ---->|                  |
+    |                |                    |                  |
+    |                |-- Call Webhook ----------------------->|
+    |                |                    |                  |
+    |                |                    |                  |-- Send SMS
+    |<-- OK ---------|                    |                  |
+    |                |                    |                  |
+    |                |                    |                  v
+[SMS RECEBIDO]                                                 
+    |                |                    |                  
+    |-- Verify ----->|                    |                  
+    |   {code}       |-- Validate OTP --->|                  
+    |                |                    |                  
+    |                |-- Create User/Sess |                  
+    |<-- JWT ---------|                    |                  
+```
+
+
+# =============================================================================
+# 17. RESUMO EXECUTIVO
+# =============================================================================
+
+## 17.1 Diferenciais do Cascata Auth
+
+| Feature | Cascata | Supabase Auth | Firebase Auth |
+|---------|---------|---------------|---------------|
+| Custom Providers | ✅ Webhook-based | ❌ Limitado | ❌ Limitado |
+| Multiple Identities | ✅ 1:N | ✅ 1:N | ❌ 1:1 |
+| Sovereign Policies | ✅ Por origin | ❌ | ❌ |
+| Panic Revocation | ✅ Global/User | ❌ | ❌ |
+| Secure Payload | ✅ ECDH+AES | ❌ | ❌ |
+| Token Rotation | ✅ Com hijack detect | ✅ | ✅ |
+| Device Fingerprint | ✅ | ❌ | ❌ |
+
+## 17.2 Checklist de Implementação SDK
+
+Para implementar um SDK completo do Cascata, deve-se suportar:
+
+- [ ] Login Universal (qualquer provider)
+- [ ] Sign Up com confirmação
+- [ ] Passwordless/Challenge-Response
+- [ ] TOTP Setup e Verification
+- [ ] MFA com TOTP
+- [ ] Link/Link de Identidades
+- [ ] Listar Sessões
+- [ ] Revogar Outras Sessões
+- [ ] Revogar Sessão Específica
+- [ ] Refresh Token Rotation
+- [ ] Logout com Blacklist
+- [ ] Secure Login (ECDH+AES)
+- [ ] Device Fingerprinting
+- [ ] OAuth (Google, GitHub, etc)
+- [ ] Magic Link
+- [ ] Password Recovery
+- [ ] Webhook Challenge Handler
+- [ ] i18n/Language support
+
+
+# =============================================================================
+# 18. GLOSSÁRIO
+# =============================================================================
+
+- **Identity**: Uma "chave" de autenticação vinculada a um usuário
+- **Provider**: Método de autenticação (email, google, cpf, totp)
+- **Strategy**: Configuração de um provider customizado
+- **Policy**: Regra de segurança que define requisitos de auth
+- **Challenge**: Código OTP enviado para verificação
+- **Sovereign**: Controle total do dono do projeto sobre regras
+- **Panic**: Modo emergência para revogação imediata
+- **Fingerprint**: Hash único de dispositivo para segurança
+- **Rotation**: Troca atômica de refresh tokens
+- **Lockout**: Bloqueio temporário após tentativas falhas
+- **Tenancy**: Isolamento de dados por projeto
+- **Agnostic**: Independente de implementação específica
+
+
+# =============================================================================
+# 19. REFERÊNCIAS
+# =============================================================================
+
+- RFC 6238: TOTP - Time-Based One-Time Password Algorithm
+- RFC 4226: HOTP - HMAC-Based One-Time Password Algorithm  
+- ECDH: Elliptic Curve Diffie-Hellman Key Exchange (NIST P-256)
+- HKDF: RFC 5869 - HMAC-based Extract-and-Expand Key Derivation Function
+- AES-256-GCM: NIST SP 800-38D
+- bcrypt: Adaptive password hashing (work factor 10+)
+
+
+# =============================================================================
+# DOCUMENTAÇÃO GERADA A PARTIR DE ANÁLISE PROFUNDA DO CÓDIGO-FONTE
+# =============================================================================
+# Arquivos analisados (20+ arquivos, ~5000+ linhas):
+# 
+# Backend (TypeScript):
+# - /backend/services/AuthService.ts (Core: OTP, TOTP, webhooks, policies)
+# - /backend/services/GoTrueService.ts (Tokens, signup, MFA enforcement)
+# - /backend/services/RateLimitService.ts (Lockout, panic, caching)
+# - /backend/services/WebhookService.ts (Challenge dispatch)
+# - /backend/src/controllers/DataAuthController.ts (HTTP endpoints)
+#
+# Backend (Go):
+# - /backend/internal/services/auth.go (Session management, rotation)
+# - /backend/internal/services/gotrue.go (GoTrue bridge)
+# - /backend/internal/services/database.go (Schema definition)
+# - /backend/internal/services/ratelimit.go (Lockout logic)
+#
+# Frontend/Web:
+# - /frontend/lib/PayloadCrypto.ts (ECDH + AES implementation)
+#
+# Versão: 2.0 COMPLETA
+# Data: Abril 2026
+# Status: PRONTO PARA IMPLEMENTAÇÃO DOS SDKs
+# =============================================================================
+```
+
+**Por que isso é nativo?**
+Mesmo o login padrão (E-mail/Senha) é tratado apenas como mais um *provider* na tabela de identidades. Não existe tratamento especial para senha na tabela de usuários. Isso torna o sistema agnóstico a método de login.
+
+---
+
+## 3. O Fluxo de Vida de uma Requisição (Como o RLS funciona)
+
+Aqui está o segredo de como o `auth.uid()` funciona sem que o banco saiba de sessões. Ocorre uma **Troca de Contexto** a cada milissegundo.
+
+### Passo 1: O Passaporte (JWT)
+Quando o usuário loga (seja por Google, Senha ou Magic Link), o Backend (Node.js) valida a credencial na tabela `auth.identities`. Se válido, ele assina um **JWT (JSON Web Token)** usando a `JWT_SECRET` do projeto.
+
+O JWT contém:
+```json
+{
+  "sub": "uuid-do-auth-users",  <-- O Âncora
+  "role": "authenticated",      <-- O Papel
+  "email": "user@email.com",
+  "exp": 1715000000
+}
+```
+
+### Passo 2: A Chegada no Data Plane
+O usuário faz um request: `GET /rest/v1/todos`.
+Ele envia o header: `Authorization: Bearer <JWT>`.
+
+O Backend (Express/Middleware):
+1.  Verifica a assinatura do JWT (garante que não foi falsificado).
+2.  Extrai o `sub` (UUID) e `role`.
+3.  Pega uma conexão do Pool do banco de dados (que é genérica, usada por todos).
+
+### Passo 3: A Injeção de Contexto (A Mágica)
+Antes de rodar a query do usuário, o Backend executa comandos de sessão local no Postgres **dentro da mesma transação**:
+
+```sql
+-- O Backend roda isso invisivelmente:
+BEGIN;
+-- Define a role do banco para limitar poderes gerais
+SET LOCAL ROLE cascata_api_role; 
+
+-- Injeta variáveis de configuração de sessão (GUCs)
+SELECT set_config('request.jwt.claim.sub', 'uuid-do-usuario', true);
+SELECT set_config('request.jwt.claim.role', 'authenticated', true);
+SELECT set_config('request.jwt.claim.email', 'email-do-usuario', true);
+
+-- AGORA roda a query do usuário
+SELECT * FROM public.todos;
+
+-- Limpa tudo antes de devolver a conexão para o Pool
+COMMIT;
+```
+
+### Passo 4: A Função auth.uid()
+Agora faz sentido as funções que criei na migration `013`.
+Quando o Postgres está rodando o `SELECT` acima e encontra uma política RLS:
+
+```sql
+CREATE POLICY "Meus Dados" ON public.todos
+USING ( user_id = auth.uid() );
+```
+
+A função `auth.uid()` faz exatamente isto:
+```sql
+-- Ele lê a variável que injetamos no Passo 3
+SELECT current_setting('request.jwt.claim.sub', true)::uuid;
+```
+
+### Resultado
+O PostgreSQL "pensa" que aquela conexão pertence àquele usuário específico apenas durante aqueles milissegundos da execução. Isso garante isolamento total de dados entre usuários, mesmo usando um Pool de conexões compartilhado.
+
+---
+
+## 4. Onde a "Revolução" Acontece
+
+O seu conceito de "Concatenação" é poderoso porque desacopla a **Autenticação** (provar quem sou) da **Autorização** (o que meu UUID pode fazer).
+
+1.  **Multi-Factor Nativo:** Como as identidades são uma lista (`1:N`), você pode exigir no futuro que um usuário tenha *duas* identidades validadas (ex: Senha + SMS) antes de emitir o JWT.
+2.  **Identidades Corporativas:** Você pode vincular um Login Google Workspace E um Login Microsoft AD ao mesmo UUID. O usuário vê os mesmos dados independente de por onde entrou.
+3.  **Migração Invisível:** Se você quiser migrar de Auth0 para Cascata, basta criar as entradas em `auth.identities` mantendo os UUIDs em `auth.users`. O usuário nem percebe.
+
+## 5. Resumo Clínico
+
+*   **Front-end:** Envia credenciais -> Recebe JWT.
+*   **Back-end:** Valida Credencial -> Emite JWT -> Recebe Request -> Injeta Variáveis no SQL -> Executa Query.
+*   **Database:** Não sabe de nada, apenas lê `current_setting('request.jwt.claim.sub')` via `auth.uid()` e filtra as linhas.
+
+Esta arquitetura é "Stateless" (sem estado) no servidor, infinitamente escalável e extremamente segura, pois a regra de segurança vive junto com o dado (no banco), não no código Javascript.

@@ -1,0 +1,68 @@
+--- a/frontend/pages/AutomationManager.tsx
++++ b/frontend/pages/AutomationManager.tsx
+@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
+ 
+ interface Node {
+    id: string;
+-   type: 'trigger' | 'query' | 'http' | 'logic' | 'response' | 'transform' | 'data' | 'rpc' | 'convert' | 'email' | 'math';
++   type: 'trigger' | 'query' | 'http' | 'logic' | 'response' | 'transform' | 'data' | 'rpc' | 'convert' | 'email' | 'math' | 'action_request';
+    x: number;
+    y: number;
+    label: string;
+@@ -741,7 +741,8 @@ const AutomationManager = () => {
+                         type === 'convert' ? { value: '', toType: 'string' } :
+                            type === 'email' ? { to: '', subject: '', body: '' } :
+                               type === 'response' ? { status_code: 200, body: { success: true } } :
+-                                 type === 'math' ? { expression: '', variables: {} } : {},
++                                 type === 'math' ? { expression: '', variables: {} } :
++                                    type === 'action_request' ? { operation: 'insert', table: '', body: {}, required: false } : {},
+          next: (type === 'logic') ? { true: undefined, false: undefined } : (type === 'http') ? { out: undefined, error: undefined } : []
+       };
+       setNodes([...nodes, newNode] as Node[]);
+@@ -892,7 +893,7 @@ const AutomationManager = () => {
+       const y = (e.clientY - rect.top - pan.y) / zoom;
+ 
+       const newNodeId = `node_${Date.now()}`;
+-      const typeLabels: Record<string, string> = { logic: 'Lógica', http: 'HTTP', rpc: 'RPC', data: 'Dados', query: 'SQL', transform: 'Transform', response: 'Resposta', convert: 'Conversão', email: 'Email', math: 'Math' };
++      const typeLabels: Record<string, string> = { logic: 'Lógica', http: 'HTTP', rpc: 'RPC', data: 'Dados', query: 'SQL', transform: 'Transform', response: 'Resposta', convert: 'Conversão', email: 'Email', math: 'Math', action_request: 'Ação de Banco' };
+ 
+       const newNode: Node = {
+          id: newNodeId,
+@@ -904,7 +905,8 @@ const AutomationManager = () => {
+                         type === 'convert' ? { value: '', toType: 'string' } :
+                            type === 'email' ? { to: '', subject: '', body: '' } :
+                               type === 'response' ? { status_code: 200, body: { success: true } } :
+-                                 type === 'math' ? { expression: '', variables: {} } : {},
++                                 type === 'math' ? { expression: '', variables: {} } :
++                                    type === 'action_request' ? { operation: 'insert', table: '', body: {}, required: false } : {},
+          next: (type === 'logic') ? { true: undefined, false: undefined } : (type === 'http') ? { out: undefined, error: undefined } : []
+       };
+ 
+@@ -1275,7 +1277,7 @@ const AutomationManager = () => {
+                         <div
+                            key={node.id}
+                            className={`cascata-node absolute bg-white border ${selectedNodeIds.includes(node.id) ? 'border-indigo-500 ring-4 ring-indigo-50 shadow-2xl scale-[1.02]' : 'border-slate-100 shadow-xl'} rounded-[2rem] p-6 w-[18rem] group cursor-grab active:cursor-grabbing transition-all z-20 pointer-events-auto
+-                            ${node.type === 'transform' ? 'hover:border-indigo-500 hover:shadow-indigo-100/50' :
++                            ${node.type === 'transform' || node.type === 'action_request' ? 'hover:border-indigo-500 hover:shadow-indigo-100/50' :
+                                  node.type === 'response' ? 'hover:border-emerald-500 hover:shadow-emerald-100/50' :
+                                     node.type === 'http' ? 'hover:border-amber-500 hover:shadow-amber-100/50' :
+                                        node.type === 'query' ? 'hover:border-rose-500 hover:shadow-rose-100/50' :
+@@ -1293,7 +1295,7 @@ const AutomationManager = () => {
+                               <div className="flex items-center gap-3">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg ${node.type === 'trigger' ? 'bg-indigo-600' :
+                                     node.type === 'logic' ? 'bg-slate-900' :
+-                                       node.type === 'response' ? 'bg-emerald-600' :
++                                       node.type === 'response' || node.type === 'action_request' ? 'bg-emerald-600' :
+                                           node.type === 'http' ? 'bg-amber-500' :
+                                              node.type === 'query' ? 'bg-rose-600' :
+                                                 node.type === 'data' ? 'bg-cyan-600' :
+@@ -1301,7 +1303,7 @@ const AutomationManager = () => {
+                                                       node.type === 'email' ? 'bg-sky-500' : 'bg-indigo-500'
+                                     }`}>
+                                     {node.type === 'trigger' ? <Zap size={18} /> :
+                                        node.type === 'logic' ? <GitBranch size={18} /> :
+-                                          node.type === 'response' ? <ArrowRight size={18} /> :
++                                          node.type === 'response' || node.type === 'action_request' ? <Database size={18} /> :
+                                              node.type === 'query' ? <Terminal size={18} /> :
+                                                 node.type === 'data' ? <Database size={18} /> :
+                                                    node.type === 'rpc' ? <Code size={18} /> :

@@ -1,0 +1,73 @@
+## 🏗️ Camadas de Defesa (Fluxo Real)
+
+```
+Request → [LAYER 0] → [LAYER 3.5] → [LAYER 1] → [LAYER 2] → [LAYER 3] → [LAYER 4: PostgreSQL]
+```
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  LAYER 0: Nginx Edge Defense                                        │
+│  ├── Bloqueio sem User-Agent (bots maliciosos)                      │
+│  ├── Rate Limit: 5000 req/s por IP (zone=edge_ddos)                 │
+│  ├── Connection Limit: 50 conn/IP (anti-slowloris)                  │
+│  ├── Injeção: X-Tenant-Slug (do server_name/subdomínio)             │
+│  └── Backend: Nginx (kernel space, zero overhead)                   │
+│  🎯 Descarta DDoS bruto antes de chegar no Go/Dragonfly             │
+├─────────────────────────────────────────────────────────────────────┤
+│  LAYER 0.5: Ban Progressivo (Strikes)                               │
+│  ├── Data fomat columns -> Validação de Format (Regex) -> Se falhar, morre aqui. │
+│  ├── Chave: ban:active:{ip} e ban:strikes:{ip}:{uuid}               │
+│  ├── TTL Progressivo: 1min → 10min → 1h → 6h → 24h                  │
+│  ├── Ativa após 3+ strikes em 24h                                   │
+│  ├── Backend: Dragonfly (Redis)                                     │    
+│  └── Universal Padlock -> Remove colunas bloqueadas (Lock Security Tier  │
+│  🎯 Atacantes persistentes são banidos progressivamente             │
+├─────────────────────────────────────────────────────────────────────┤
+│  LAYER 1: IP Hard Cap (OPCIONAL)                                    │
+│  ├── Chave: edge:layer1:ip:{ip}                                     │
+│  ├── Limite: via ENV EDGE_IP_HARD_CAP (ex: 1000 req/min)            │
+│  ├── Se ENV não setada = Layer 1 DESABILITADO                       │
+│  └── Backend: Dragonfly (Redis)                                     │
+│  🎯 Bloqueia DDoS puro, bots sem token (se habilitado)              │
+├─────────────────────────────────────────────────────────────────────┤
+│  LAYER 2: JWT Parse Local COM Verificação de Assinatura             │
+│  ├── Extrai UUID do JWT e verifica assinatura (HMAC)                │
+│  ├── Chave JWT: Cacheada no Dragonfly (project:{slug}:jwt_secret)   │
+│  ├── Tenant ID: X-Tenant-Slug header (do Nginx) ou URL/subdomínio   │
+│  ├── Operação: Parse + Verify (~microssegundos)                     │
+│  ├── Saída: userUUID + authSource (jwt/apikey/anon)                 │
+│  └── Backend: Dragonfly (cache de chaves)                           │
+│  🎯 Identifica usuário SEM DB lookup + evita JWT forjado            │
+├─────────────────────────────────────────────────────────────────────┤
+│  LAYER 3: Rate Limit Inteligente (4 Regras do Banco)                │
+│  ├── Chave: edge:layer3:{ip}:{uuid}:{tenant}:{rule_type}            │
+│  ├── Regras: Lidas de system.rate_limits (cacheado no Dragonfly)    │
+│  ├── 4 Tipos Detectados:                                            │
+│  │   • global:  qualquer endpoint não específico                    │
+│  │   • auth:    /auth/*, /login, /signup                            │
+│  │   • table:   /tables/{nome}/*                                    │
+│  │   • rpc:     /rpc/{função}                                       │
+│  │   • Webhook: /webhook/slug-web-hook                                                    │
+│  └── Backend: Dragonfly (contadores) + PostgreSQL (regras)          │
+│  🎯 Granularidade: cada UUID tem seu próprio limite                 │
+├─────────────────────────────────────────────────────────────────────┤
+│  LAYER 4: Security Gateway & Sovereign Engine                       │
+│  ├── 1. UNIVERSAL PADLOCK: Enforce Lock Security Tiers (immutable)  │
+│  ├── 2. REQUEST INTERCEPT: Automação sequestra o fluxo (Pré-Evento) │
+│  ├── 3. PERSISTENCE: PostgreSQL via PostgREST / RPC                 │
+│  ├── 4. RESPONSE INTERCEPT: Automação sequestra saída (Pós-Evento)  │
+│  └── 5. DATA PRIVACY OVERRIDE: Masking/Blur/Encrypt final           │
+└─────────────────────────────────────────────────────────────────────┘
+```OBS PAA WEBHOOK, ONE FONEEEMOS URRL O TENACY PARA AMBIENTES ETERNOS AQUI ENTRA UM ETALHE NO FLUXO DE ICMA QUE É:
+Webhook Request → [LAYER 0: Nginx] 
+                  [LAYER 0.5]:
+                  [LAYER 1] PULA A 2 e vai a LAYER 3
+                → [WEBHOOK LANE]
+                    ├── Identificação da fonte (URL path: /webhook/{source_id})
+                    ├── Lookup do secret no CryptoEngine (Dragonfly cache first)
+                    ├── Validação HMAC da assinatura do parceiro se erquerido
+                    ├── Rate limit por source_id (Dragonfly)
+                    └── Se válido → WorkerLane (assíncrono)
+                → [LAYER 4: apenas WorkerLane, não bloqueia request]
+
+

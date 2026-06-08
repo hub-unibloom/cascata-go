@@ -1,0 +1,131 @@
+Vou fazer uma análise completa comparando o frontend (RLSManager.tsx - Hard Security) com o backend Go. Deixe-me ler todos os pontos da UI e verificar o que está implementado.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Agora deixe-me verificar o que está implementado no backend Go:
+
+
+
+
+
+
+
+
+
+
+
+## 📊 ANÁLISE COMPLETA: Hard Security - UI vs Backend Go
+
+Após leitura detalhada de todos os pontos, aqui está o panorama completo:
+
+---
+
+### **✅ FUNCIONANDO CORRETAMENTE**
+
+| Feature | Frontend | Backend | Status |
+|---------|----------|---------|--------|
+| **Panic Mode Toggle** | `POST /security/panic` | [TogglePanic()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:76:0-102:1) - ✅ **CORRIGIDO** agora usa Dragonfly + PostgreSQL | ✅ Funcional |
+| **Status Dashboard** | `GET /security/status` (RPS + panic) | [GetStatus()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:61:0-74:1) - ✅ **CORRIGIDO** agora lê do Dragonfly | ✅ Funcional |
+| **Listar Traffic Rules** | `GET /rate-limits` | [ListRateLimits()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:104:0-123:1) - Retorna todas as regras | ✅ Implementado |
+| **Criar/Deletar Rules** | `POST/DELETE /rate-limits` | [CreateRateLimit()/DeleteRateLimit()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:125:0-158:1) | ✅ Implementado |
+| **Listar Key Groups** | `GET /security/key-groups` | [ListKeyGroups()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:170:0-189:1) | ✅ Implementado |
+| **Criar Key Group** | `POST /security/key-groups` | [CreateKeyGroup()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:191:0-209:1) | ✅ Implementado |
+| **Update Key Group** | `PATCH /security/key-groups/{id}` | [UpdateKeyGroup()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:211:0-225:1) - **limitado** | ⚠️ Parcial |
+| **Deletar Key Group** | `DELETE /security/key-groups/{id}` | [DeleteKeyGroup()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:227:0-239:1) - Verifica chaves ativas | ✅ Implementado |
+| **Listar API Keys** | `GET /api-keys` | [ListApiKeys()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:286:0-309:1) - Com join em group_name | ✅ Implementado |
+| **Criar API Key** | `POST /api-keys` | [CreateApiKey()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:311:0-352:1) - Gera sk_live_* com bcrypt | ✅ Implementado |
+| **Update API Key** | `PATCH /api-keys/{id}` | [UpdateApiKey()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:354:0-385:1) - Só expira_at/is_active | ⚠️ Parcial |
+| **Deletar API Key** | `DELETE /api-keys/{id}` | [DeleteApiKey()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:387:0-393:1) | ✅ Implementado |
+| **Rate Limiting (Middleware)** | - | [CheckRateLimit()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/services/ratelimit.go:339:0-504:1) em [DynamicRateLimiter](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/middleware/security.go:120:0-162:1) | ✅ Funcional |
+| **Nerf (expired keys)** | Mostra "DEGRADED" | [validateApiKey()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/services/ratelimit.go:508:0-557:1) verifica expiração + nerf | ✅ Funcional |
+
+---
+
+### **⚠️ IMPLEMENTAÇÃO PARCIAL (Falta dados/features)**
+
+| Feature | Frontend Espera | Backend Tem | Problema |
+|---------|-----------------|-------------|----------|
+| **Update Key Group** | `rejection_message`, `nerf_config`, `is_cumulative_default`, `default_weights`, `crud_limits` | Só atualiza: `name`, `rate_limit`, `burst_limit` | ❌ **Dados perdidos na edição** |
+| **Create Key Group** | Envia todos os campos (incluindo `nerf`, `weights`) | Insere: `name`, `rate_limit`, `burst_limit`, `window_seconds`, `crud_limits`, `scopes` | ⚠️ Falta: `rejection_message`, `nerf_config`, `is_cumulative_default`, `default_weights` |
+| **Update API Key** | Frontend quer: `group_id` (migração), `expires_at`, `is_active` | Só permite: `expires_at`, `is_active` | ❌ **Não pode mudar grupo** |
+| **Migração de Key** | Modal chama `POST /api-keys/{id}/migrate` com senha admin | **NÃO EXISTE** | ❌ **Endpoint ausente** |
+| **Custom Messages** | `msgAnon`, `msgAuth` na regra | [CreateRateLimit()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:125:0-158:1) aceita mas não salva `message_anon/message_auth` | ❌ **Mensagens perdidas** |
+| **CRUD Granular** | Envia `crud_limits` (anon/auth) por operação | [CreateRateLimit()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:125:0-158:1) salva `crud_limits` | ✅ Mas [CheckRateLimit()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/services/ratelimit.go:339:0-504:1) lê e aplica |
+| **Time Windows** | Multi-dimensional: daily, weekly, monthly | `RateLimitRule.TimeWindows[]` existe | ✅ Implementado |
+| **Operation Weights** | Peso por operação (read=1, create=5...) | [CheckRateLimit()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/services/ratelimit.go:339:0-504:1) aplica pesos | ✅ Funcional |
+| **Cumulative Quota** | Checkbox "Cumulative" por operação | `IsCumulative` + quota balance | ✅ Funcional |
+
+---
+
+### **❌ NÃO IMPLEMENTADO NO BACKEND**
+
+| Feature Frontend | Endpoint Esperado | Status Backend |
+|------------------|-------------------|----------------|
+| **Migrar Key entre Groups** | `POST /api-keys/{id}/migrate` | ❌ **AUSENTE** - Frontend tem modal completo |
+| **Mensagens de Rejeição Persistidas** | Salvar `message_anon`, `message_auth` | ❌ Não salvos no [CreateRateLimit](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:125:0-158:1) |
+| **Nerf Config Completo** | Salvar `nerf_config` no group | ⚠️ Tabela aceita mas Create/Update não populam |
+| **Group Limits em Rules** | `group_limits` na regra | ⚠️ [CreateRateLimit](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:125:0-158:1) recebe mas não usa `metadata` |
+| **Auth-specific Rate Limits** | `rate_limit_auth`, `burst_limit_auth` | ✅ Implementado |
+
+---
+
+### **🔴 GAPS CRÍTICOS IDENTIFICADOS**
+
+1. **Migração de API Keys** ❌❌❌
+   - Frontend tem modal completo (`migrationModal`)
+   - Chama `POST /api-keys/{id}/migrate` com senha admin
+   - **Backend: endpoint não existe**
+
+2. **Key Groups - Dados Perdidos** ❌❌
+   - Frontend envia: `rejection_message`, `nerf_config`, `is_cumulative_default`, `default_weights`
+   - [CreateKeyGroup()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:191:0-209:1) insere só: `name`, `rate_limit`, `burst_limit`, `window_seconds`, `crud_limits`, `scopes`
+   - [UpdateKeyGroup()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:211:0-225:1) atualiza só: `name`, `rate_limit`, `burst_limit`
+
+3. **Custom Messages em Rate Limits** ❌
+   - Frontend envia `message_anon`, `message_auth`
+   - [CreateRateLimit()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:125:0-158:1) não salva esses campos (só usa defaults)
+
+4. **Mudança de Grupo da API Key** ❌
+   - Frontend mostra botão "Change Group" (Move)
+   - [UpdateApiKey()](cci:1://file:///home/cocorico/Documentos/proejetos/cascata%20go/backend/internal/controllers/security.go:354:0-385:1) não aceita `group_id`
+
+---
+
+### **✅ O QUE ESTÁ FUNCIONANDO BEM**
+
+- Panic Mode (agora corrigido - Dragonfly)
+- RPS Tracking (agora corrigido - Dragonfly)
+- Rate limiting básico (anon/auth/burst)
+- CRUD granular por operação
+- API Key generation com hash seguro (bcrypt)
+- Key Groups básico (create/list/delete)
+- Nerf (degraded mode) quando key expira
+- Time windows multi-dimensionais
+
+---
+
+### **📋 RESUMO EXECUTIVO**
+
+| Área | Cobertura |
+|------|-----------|
+| **Panic Mode / Hard Security** | ✅ 100% (corrigido agora) |
+| **Rate Limiting Básico** | ✅ 100% |
+| **Rate Limiting Avançado** | ⚠️ 70% (faltam mensagens, group limits) |
+| **Key Groups** | ⚠️ 60% (faltam nerf, rejection_message, cumulative) |
+| **API Keys** | ⚠️ 80% (falta migração entre grupos) |
+
+---
+
+**Recomendação:** Priorizar a implementação do endpoint de **migração de API keys** e a **expansão do UpdateKeyGroup** para suportar todos os campos que o frontend envia.

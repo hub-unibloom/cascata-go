@@ -1,0 +1,27 @@
+# Dockerfile otimizado para VPS com recursos limitados
+# Uso: docker build -f Dockerfile.optimized -t cascata-cert_controller:latest .
+# Requer: binário pré-compilado em /tmp/cert-controller
+
+FROM alpine:3.19
+
+# Instalar apenas o essencial
+RUN apk add --no-cache \
+    certbot \
+    certbot-nginx \
+    openssl \
+    ca-certificates \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Criar diretórios
+RUN mkdir -p /etc/letsencrypt /var/www/html /etc/nginx/conf.d/dynamic
+
+# Copiar binário pré-compilado (deve ser passado via build context)
+COPY cert-controller /usr/local/bin/cert-controller
+RUN chmod +x /usr/local/bin/cert-controller
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD pgrep cert-controller || exit 1
+
+CMD ["/usr/local/bin/cert-controller"]

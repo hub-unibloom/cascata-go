@@ -1,0 +1,55 @@
+# Stage 1: Build
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /app
+
+# Instala dependências nativas para build (se necessário)
+RUN apk add --no-cache git make g++ gcc musl-dev
+
+# Copia a definição dos módulos
+COPY go.mod go.sum* ./
+
+# Copia TODO o código fonte (Necessário para o go mod tidy ler os pacotes)
+COPY . .
+
+# Agora sim, organiza as dependências e gera o go.sum
+RUN go mod tidy && go mod download
+
+# Verifica integridade do código e imports (Fail-fast)
+RUN go vet ./...
+
+# Compila os binários em modo estático com verbose logging
+# Cascata agora utiliza /cmd/server como entrypoint principal versátil
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o cascata-api ./cmd/server/main.go 2>&1
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o cascata-worker ./cmd/server/main.go 2>&1
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o cascata-engine ./cmd/server/main.go 2>&1
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o cascata-cli ./cmd/cli/main.go 2>&1
+
+# Stage 2: Runtime
+FROM alpine:latest
+
+# Instala utilitários necessários para operação (Sovereign Infrastructure)
+# certbot, openssl -> Certificados SSL
+# docker-cli -> Recarregar Nginx no host
+# postgresql-client -> pg_dump/psql para Backup/Import
+# tzdata -> Suporte a timezones
+# zip/unzip -> Operações de arquivamento
+RUN apk add --no-cache certbot openssl docker-cli postgresql-client tzdata zip unzip ca-certificates
+
+WORKDIR /app
+
+# Copia os binários compilados
+COPY --from=builder /app/cascata-api .
+COPY --from=builder /app/cascata-worker .
+COPY --from=builder /app/cascata-engine .
+COPY --from=builder /app/cascata-cli .
+
+# Copia outros arquivos necessários (migrations, scripts, etc)
+COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/scripts ./scripts
+
+# Exposição da porta padrão (mesma do Node para minimizar impacto no docker-compose)
+EXPOSE 3000
+
+# O binário padrão é o API, mas os outros podem ser chamados mudando o CMD
+CMD ["./cascata-api"]

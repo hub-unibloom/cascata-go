@@ -1,0 +1,108 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+        include_metadata: true
+        cors:
+          allowed_origins: ["*"]
+          allowed_headers: ["X-Project-Slug", "X-API-Key", "Content-Type"]
+
+processors:
+  # Add project slug from header to resource attributes
+  resource/add_project:
+    attributes:
+      - key: project.slug
+        from_attribute: X-Project-Slug
+        action: upsert
+
+  # Batch processing for efficiency
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    limit_mib: 512
+    spike_limit_mib: 128
+    check_interval: 5s
+
+  # Routing by project slug (custom processor logic)
+  # Note: In production, use a custom processor or attribute-based routing
+  attributes/routing:
+    actions:
+      - key: routing.destination
+        from_attribute: project.slug
+        action: upsert
+
+exporters:
+  # Debug exporter for development
+  debug:
+    verbosity: detailed
+
+  # File exporter for dead letter queue
+  file/deadletter:
+    path: /var/log/cascata/deadletter/deadletter.jsonl
+    rotation:
+      max_megabytes: 100
+      max_days: 7
+      max_backups: 5
+
+  # # Datadog exporter - DESCOMENTE e configure DD_API_KEY para usar
+  # # Exporte: export DD_API_KEY=sua_chave_aqui
+  # datadog:
+  #   api:
+  #     key: ${DD_API_KEY}
+  #   logs:
+  #     source: cascata
+  #     service: audit-logs
+  #
+  # # Splunk HEC exporter - DESCOMENTE e configure para usar
+  # splunk_hec:
+  #   token: ${SPLUNK_TOKEN}
+  #   endpoint: ${SPLUNK_ENDPOINT}
+  #   source: cascata
+  #   sourcetype: _json
+  #
+  # # Loki exporter - DESCOMENTE e configure para usar
+  # loki:
+  #   endpoint: ${LOKI_ENDPOINT}
+  #   labels:
+  #     job: cascata-logs
+  #     project: cascata
+  #
+  # # OTLP generic exporter - DESCOMENTE e configure para usar
+  # otlp/external:
+  #   endpoint: ${OTLP_EXTERNAL_ENDPOINT}
+  #   headers:
+  #     authorization: ${OTLP_EXTERNAL_AUTH}
+
+extensions:
+  # Health check endpoint
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # pprof for profiling
+  pprof:
+    endpoint: 0.0.0.0:1777
+
+  # zpages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource/add_project, batch]
+      exporters: [debug, file/deadletter]
+
+  # Multi-tenant routing (conceptual - actual routing requires custom processor or multiple pipelines)
+  # For production, use a custom processor that reads X-Project-Slug and routes accordingly
+  # Or use multiple pipelines with filter processors based on resource attributes
+
+  telemetry:
+    logs:
+      level: warn

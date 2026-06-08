@@ -1,0 +1,93 @@
+Ciei essa função aqui:
+CREATE OR REPLACE FUNCTION get_teste()
+RETURNS SETOF teste
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM teste;
+$$;
+
+ela aprecceu dduplicada logo de inicio, estranho posi eu criei um 
+asssent para ela e ela ja apareceu duplicada  maas no caso o asssent
+não reconheceu o nome correto e criou outro assent ai ficou uma vazi
+e um existente, então reonomei parra o nome coretoe  eu ceto, 
+mas fui deletar o assent extra e deu problema ao deletar:
+
+Request URL
+http://44.197.182.159/api/data/teste/assets/2e732f67-ae6f-4755-a6db-286be90edac8
+Request Method
+DELETE
+Status Code
+404 Not Found
+
+a tabela erra essa:
+CREATE TABLE public."teste" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "created_at" timestamp with time zone DEFAULT now(),
+  "nome" text
+);
+
+a funçaõ essa aqui:
+CREATE OR REPLACE FUNCTION get_teste()
+RETURNS SETOF teste
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM teste;
+$$;
+
+{
+    "id": "2e732f67-ae6f-4755-a6db-286be90edac8",
+    "name": "get_teste",
+    "type": "rpc",
+    "metadata": {
+        "sql": ""
+    },
+    "parent_id": null
+}
+
+
+A chamada de url foie ssa aqui no payload:
+{"id":"2e732f67-ae6f-4755-a6db-286be90edac8","name":"get_teste","type":"rpc","metadata":{"sql":""},"parent_id":null}
+
+
+ao tentar executar ela:
+Request URL
+http://44.197.182.159/api/data/teste/query?schema=public
+Request Method
+POST
+Status Code
+400 Bad Request
+
+resposta:
+{error: "statement 1 failed: ERROR: function get_teste() does not exist (SQLSTATE 42883)"}
+
+
+mas ela existe sim:
+[
+    {
+        "created_at": "2026-04-07T18:13:31.278197Z",
+        "id": "a064e953-f938-4e4c-8778-3b3dafb135db",
+        "metadata": {
+            "notes": "",
+            "sql": "CREATE OR REPLACE FUNCTION get_teste()\nRETURNS SETOF teste\nLANGUAGE sql\nSECURITY DEFINER\nAS $$\n  SELECT * FROM teste;\n$$;"
+        },
+        "name": "get_teste",
+        "parent_id": null,
+        "project_slug": "teste",
+        "type": "",
+        "updated_at": "2026-04-07T18:13:31.278197Z"
+    },
+    {
+        "created_at": "2026-04-07T18:13:25.444156Z",
+        "id": "2e732f67-ae6f-4755-a6db-286be90edac8",
+        "metadata": {
+            "sql": ""
+        },
+        "name": "get_teste",
+        "parent_id": null,
+        "project_slug": "teste",
+        "type": "rpc",
+        "updated_at": "2026-04-07T18:13:25.444156Z"
+    }
+]

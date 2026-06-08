@@ -1,0 +1,169 @@
+# Diff Component Implementation Plan
+
+This plan implements a visual diff component for edge function version history and comparison, enabling rollback and pre-deploy analysis with up to 3-way version comparison.
+
+## Current State Analysis
+
+**Backend (Already Implemented):**
+- `system.edge_functions_history` table with full content storage
+- `GetFunctionHistory` endpoint returns version metadata (line 422-459 in edge.go)
+- Automatic history archiving on delete/update operations
+- Version tracking with increment on each deploy
+
+**Frontend (Needs Implementation):**
+- RPCManager.tsx has edge function editor and management
+- No diff visualization component for version comparison
+- No UI to view/compare historical versions
+
+## Implementation Plan
+
+### Phase 1: Backend Enhancements
+
+**1.1 Add GetHistoryVersionContent Endpoint**
+- Location: `backend/internal/controllers/edge.go`
+- New endpoint: `GET /api/data/{projectId}/edge-functions/{name}/history/{historyId}`
+- Purpose: Retrieve full content (code + metadata) of a specific history version
+- Returns: content, env_vars, imports, timeout_ms, version, created_at, change_reason
+
+**1.2 Add RollbackToVersion Endpoint**
+- Location: `backend/internal/controllers/edge.go`
+- New endpoint: `POST /api/data/{projectId}/edge-functions/{name}/rollback/{historyId}`
+- Purpose: Restore edge function to a specific historical version
+- Process:
+  - Archive current version to history before rollback
+  - Restore content and metadata from selected history version
+  - Increment version number
+  - Record rollback in change_reason
+
+**1.3 Add GetHistoryContent Endpoint (Alternative)**
+- Location: `backend/internal/controllers/edge.go`
+- New endpoint: `GET /api/data/{projectId}/edge-functions/{name}/history-content/{historyId}`
+- Purpose: Lightweight endpoint to get just the content field for diff comparison
+- Returns: decrypted content string
+
+### Phase 2: Frontend Diff Component
+
+**2.1 Install Diff Library**
+- Add `react-diff-viewer-continued` to package.json
+- This library provides side-by-side diff with syntax highlighting
+- Alternative: Build custom lightweight diff using existing infrastructure
+
+**2.2 Create DiffViewer Component**
+- Location: `frontend/components/edge/DiffViewer.tsx`
+- Features:
+  - Modal interface (similar to ProjectVaultModal)
+  - Version selector dropdown (up to 3 versions)
+  - Side-by-side diff view with line highlighting
+  - Metadata comparison panel (env_vars, timeout, imports)
+  - Rollback button for each historical version
+  - Syntax highlighting for JavaScript code
+
+**2.3 Create VersionHistoryPanel Component**
+- Location: `frontend/components/edge/VersionHistoryPanel.tsx`
+- Features:
+  - List of historical versions with metadata
+  - Version number, date, author, change reason
+  - Checkbox to select versions for comparison (max 3)
+  - "Compare Selected" button to open DiffViewer
+
+### Phase 3: Integration with RPCManager
+
+**3.1 Add History Button to RPCManager**
+- Location: `frontend/pages/RPCManager.tsx`
+- Add "History" button in editor toolbar (next to Save)
+- Only visible when an edge function is selected
+- Opens VersionHistoryPanel modal
+
+**3.2 Add State Management**
+- Add state for history modal visibility
+- Add state for selected versions to compare
+- Add state for diff modal visibility
+
+**3.3 Wire Up API Calls**
+- Fetch history list on modal open
+- Fetch specific version content when selected
+- Call rollback endpoint when restore is clicked
+
+### Phase 4: UI/UX Refinements
+
+**4.1 Diff View Layout**
+- 3-column layout for comparing 3 versions
+- Each column shows: version header, code diff, metadata panel
+- Color coding: green for additions, red for deletions
+- Line numbers for reference
+
+**4.2 Metadata Comparison**
+- Show env_vars changes (added/removed/modified)
+- Show timeout_ms changes
+- Show imports array changes
+- Visual indicators for each field type
+
+**4.3 Rollback Confirmation**
+- Confirmation dialog before rollback
+- Show what will be changed
+- Option to add custom change reason
+
+## Technical Details
+
+### Backend API Endpoints
+
+```go
+// Get specific history version content
+GET /api/data/{projectId}/edge-functions/{name}/history/{historyIdCount}
+Response: {
+  id: string,
+  version: number,
+  content: string,
+  env_vars: Record<string, string>,
+  imports: string[],
+  timeout_ms: number,
+  created_at: string,
+  created_by: string,
+  change_reason: string
+}
+
+// Rollback to specific version
+POST /api/data/{projectId}/edge-functions/{name}/rollback/{historyId}
+Body: { change_reason?: string }
+Response: {
+  success: true,
+  rolled_back_to_version: number,
+  new_version: number
+}
+```
+
+### Frontend Component Structure
+
+```
+frontend/components/edge/
+├── DiffViewer.tsx          # Main diff modal with 3-way comparison
+└── VersionHistoryPanel.tsx # History list with version selection
+```
+
+### Database Schema (Already Exists)
+
+The `system.edge_functions_history` table already has all required fields:
+- id, function_id, project_slug, name
+- content, runtime, version
+- metadata, timeout_ms, memory_limit_mb, env_vars
+- created_at, created_by, change_reason
+
+## Implementation Order
+
+1. Backend endpoints (GetHistoryVersionContent, RollbackToVersion)
+2. Install diff library
+3. Create DiffViewer component
+4. Create VersionHistoryPanel component
+5. Integrate into RPCManager
+6. Test with edge functions
+7. Add rollback confirmation
+8. Polish UI/UX
+
+## Success Criteria
+
+- Users can view version history for any edge function
+- Users can compare up to 3 versions side-by-side
+- Users can rollback to any historical version
+- Diff shows both code and metadata changes
+- Rollback archives current version before restoring
+- Integration is seamless with existing RPCManager workflow

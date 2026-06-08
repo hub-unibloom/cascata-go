@@ -1,0 +1,257 @@
+Aqui está seu conteúdo transformado em um documento técnico estruturado no estilo RFC / especificação de arquitetura:
+
+---
+
+# **RFC: Arquitetura de Orquestração de Fluxos — Nexus v0**
+
+**Status:** Proposta
+**Autor:** Sistema Interno
+**Versão:** 0.1
+**Data:** 2026-04-30
+
+---
+
+## **1. Contexto**
+
+O sistema atual de automações encontra-se em estado MVP, apresentando limitações críticas relacionadas a:
+
+* Persistência inconsistente de fluxos
+* Execução não determinística
+* Falta de controle sobre concorrência
+* Dependência parcial de estruturas legadas (v2/v3)
+* Inconsistência na reconstrução de fluxos salvos
+
+Diante disso, foi iniciado o desenvolvimento do **Nexus v0**, com o objetivo de criar um orquestrador de fluxos robusto, previsível e altamente configurável.
+
+---
+
+## **2. Problemas Identificados**
+
+### **2.1 Persistência de Fluxos**
+
+* Fluxos não são salvos corretamente
+* Ao serem recarregados, não mantêm posição, conexões ou estado original
+* Schema atual é incompleto ou parcialmente implementado
+
+### **2.2 Execução de Fluxos**
+
+* Falta de clareza sobre ordem de execução
+* Ausência de distinção entre execução linear e paralela
+* Dependência implícita entre nós não é respeitada
+
+### **2.3 Concorrência**
+
+* Não há controle explícito sobre execução concorrente
+* Impossibilidade de configurar:
+
+  * Execuções simultâneas (paralelismo)
+  * Execuções sequenciais (linearidade)
+
+### **2.4 Contaminação por Código Legado**
+
+* Estruturas de automações v2/v3 ainda impactam o comportamento
+* Sistema não foi completamente reconstruído
+* Uso indevido de schemas antigos
+
+---
+
+## **3. Objetivos**
+
+### **3.1 Objetivo Principal**
+
+Construir um **orquestrador de fluxos determinístico, configurável e escalável**, baseado no padrão Nexus.
+
+### **3.2 Objetivos Específicos**
+
+* Garantir persistência completa e confiável
+* Permitir controle explícito de execução (linear vs paralela)
+* Definir comportamento individual de cada nó
+* Eliminar dependências de versões anteriores
+* Criar base sólida para expansão futura
+
+---
+
+## **4. Conceitos Fundamentais**
+
+### **4.1 Fluxo**
+
+Um fluxo é um grafo direcionado composto por nós e conexões.
+
+### **4.2 Nó**
+
+Unidade de execução dentro do fluxo (ex: HTTP, lógica, transformação).
+
+### **4.3 Orquestrador**
+
+Responsável por:
+
+* Interpretar o fluxo
+* Gerenciar execução
+* Controlar concorrência
+* Garantir consistência
+
+---
+
+## **5. Modelo de Execução**
+
+### **5.1 Tipos de Fluxo**
+
+#### **5.1.1 Linear**
+
+Execução sequencial:
+
+```
+A → B → C
+```
+
+* Ordem garantida
+* Dependência explícita entre nós
+* Compartilhamento de dados permitido apenas entre nós conectados (A tem aesso a C tambem)
+
+#### **5.1.2 Paralelo**
+
+Execução simultânea:
+
+```
+      → B →
+A →         → D
+      → C →
+```
+OU
+
+A → B → C TODOS SIMULTAANEOS A NAO ESPEERA PO B NEM C TUDODE UMA VEZ, SÓ O NÓ DE respost espea todos estem oka, paa ertonr a resposta 
+
+
+* Execução concorrente
+* Sem garantia de ordem entre nós paralelos
+* Necessidade de controle de sincronização
+
+---
+
+## **6. Controle de Concorrência**
+
+Cada nó deve suportar configuração de execução:
+
+### **6.1 Modos de Execução**
+
+* **Sequencial ("Pistola")**
+
+  * Uma execução por vez
+  * Próxima execução só inicia após término da anterior
+
+* **Paralelo ("Metralhadora")**
+
+  * Múltiplas execuções simultâneas
+  * Exemplo: disparar 10 requisições HTTP em paralelo
+
+### **6.2 Configuração Esperada (exemplo conceitual)**
+
+```json
+{
+  "node_id": "http_1",
+  "execution": {
+    "mode": "parallel",
+    "max_concurrency": 10
+  }
+}
+```
+
+---
+
+## **7. Modelo de Dados e Dependência**
+
+### **7.1 Regras de Acesso a Dados**
+
+* Nós só podem acessar dados de:
+
+  * Nós anteriores (em fluxo linear)
+  * Nós explicitamente conectados
+
+### **7.2 Isolamento**
+
+* Execuções paralelas devem ter isolamento de contexto
+* Evitar vazamento de dados entre execuções simultâneas
+
+---
+
+## **8. Persistência de Fluxos**
+
+### **8.1 Requisitos**
+
+* Salvamento completo de:
+
+  * Nós
+  * Conexões
+  * Posições visuais
+  * Configurações de execução
+* Capacidade de reconstrução fiel
+
+### **8.2 Problemas Atuais**
+
+* Salvamento parcial
+* Estrutura inconsistente
+* Mistura com schemas antigos
+
+### **8.3 Diretriz**
+
+* Criar novo schema baseado exclusivamente no padrão Nexus
+* Descontinuar completamente formatos anteriores
+
+---
+
+## **9. Diretrizes de Arquitetura**
+
+### **9.1 Isolamento de Versão**
+
+* Nexus deve ser independente de v2/v3
+* Nenhuma reutilização de código legado sem validação
+
+### **9.2 Determinismo**
+
+* Execução previsível
+* Mesmo input → mesmo output
+
+### **9.3 Extensibilidade**
+
+* Novos tipos de nós devem ser facilmente adicionáveis
+
+### **9.4 Observabilidade (futuro)**
+
+* Logs estruturados
+* Rastreamento de execução (tracing)
+
+---
+
+## **10. Estado Atual**
+
+* Nexus v0 possui base promissora
+* Porém:
+
+  * Ainda há dependência de estruturas antigas
+  * Schema de persistência incompleto
+  * Execução não totalmente controlada
+
+---
+
+## **11. Ações Recomendadas**
+
+1. **Revisar completamente o schema de persistência**
+2. **Remover qualquer dependência de v2/v3**
+3. **Implementar controle explícito de execução**
+4. **Definir contrato claro de nós**
+5. **Garantir reconstrução fiel de fluxos**
+6. **Testar cenários de concorrência**
+7. **Validar execução linear vs paralela**
+
+---
+
+## **12. Conclusão**
+
+O Nexus v0 deve ser tratado como uma reconstrução real do sistema de automações, e não uma evolução incremental.
+
+A base atual é promissora, porém contaminada por decisões anteriores. Para atingir o objetivo de um orquestrador poderoso, é necessário:
+
+* Reforçar a arquitetura
+* Eliminar inconsistências
+* Garantir controle total ao usuário sobre execução e comportamento
+* NÃO VAMOS DICIOAAN NOVO NÓ AGOA, VAMOS PIMEIRO DEIXA OQ UE FONECEMOS FUNCIOANDNDO  ABASE ERAALMENTE OM TUDO BEM IMPLEMENTADO QUE FOI DITO AQUI, E DEPOIS NOFUTUO IREMOS ERALMENTE CONTUI OS DEMAIS NÓS, ESSSA EISÃO Ẃ PQ O POUCCO QUE TEMOS ESTÁ MAL FEITO, SEM SALVAMENTEO, SEM ESCOLHA ED MODO DE OPEAÇÃO DE  FLUXOm, t sme nó de resposta enfim,....o bassee peisa sse mais bem solidificada e expessa no fontendd om sinegia eentre fornt e backend

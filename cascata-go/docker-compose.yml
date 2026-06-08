@@ -1,0 +1,451 @@
+services: 
+  nginx:
+    image: nginx:alpine
+    container_name: cascata-nginx
+    ports:
+      - "${APP_HTTP_PORT:-80}:80"
+      - "${APP_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${CASCATA_DATA_DIR:-/cascata-data}/acme_challenge:/var/www/html
+      - ${CASCATA_DATA_DIR:-/cascata-data}/certs:/etc/letsencrypt
+      - ${CASCATA_DATA_DIR:-/cascata-data}/nginx_dynamic:/etc/nginx/conf.d/dynamic
+      - ${CASCATA_DATA_DIR:-/cascata-data}/storage:/cascata/storage:ro
+      - cascata_sockets:/tmp/cascata_sockets
+    depends_on:
+      - backend_control
+      - backend_data
+      - frontend
+    networks:
+      - cascata_public
+      - cascata_app
+    restart: always
+
+  nginx_controller:
+    build:
+      context: ./nginx-controller
+      dockerfile: Dockerfile
+    container_name: cascata-nginx-controller
+    environment:
+      - NGINX_CONTAINER_NAME=cascata-nginx
+      - INTERNAL_CTRL_SECRET=${INTERNAL_CTRL_SECRET}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - cascata_app
+    restart: always
+
+  pgbouncer:
+    build:
+      context: ./pgbouncer
+      dockerfile: Dockerfile
+    container_name: cascata-pgbouncer
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-cascata_admin}
+      - DB_PASSWORD=${DB_PASS:-secure_pass}
+      - LISTEN_PORT=6432
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=10000
+      - DEFAULT_POOL_SIZE=20
+      - ADMIN_USERS=${DB_USER:-cascata_admin}
+      - AUTH_TYPE=scram-sha-256
+      - AUTH_QUERY=SELECT usename, passwd FROM pg_shadow WHERE usename=$1
+      - IGNORE_STARTUP_PARAMETERS=extra_float_digits,binary_as_text
+      - DEBUG=true
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cascata_data
+    restart: always
+
+  # --- BACKEND SERVICES ---
+
+  backend_control:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cascata-backend
+    env_file: .env
+    environment:
+      - SERVICE_TYPE=control
+      - SERVICE_MODE=CONTROL_PLANE
+      - SYSTEM_DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}
+      - SYSTEM_JWT_SECRET=${SYSTEM_JWT_SECRET}
+      - CASCATA_OTP_SECRET=${CASCATA_OTP_SECRET}
+      - CASCATA_OTP_ENABLED=${CASCATA_OTP_ENABLED:-false}
+      - INTERNAL_CTRL_SECRET=${INTERNAL_CTRL_SECRET}
+      - PORT=3000
+      - DRAGONFLY_HOST=dragonfly
+      - DRAGONFLY_PORT=6379
+      - DB_DIRECT_HOST=db
+      - DB_DIRECT_PORT=5432
+      - DB_POOL_HOST=pgbouncer
+      - DB_POOL_PORT=6432
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_SUPERUSER=${DB_SUPERUSER:-postgres}
+      - DB_SUPERUSER_PASSWORD=${DB_SUPERUSER_PASSWORD:-postgres}
+      - STORAGE_ROOT=/cascata/storage
+      - MIGRATIONS_ROOT=/app/migrations
+      - TEMP_UPLOAD_ROOT=/cascata/temp
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - CRYPTO_ENGINE_URL=http://crypto_engine:3000
+      - API_KEY=${GEMINI_API_KEY}
+      # MinIO Internal S3 Configuration (No exposed ports - secure by design)
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-cascataadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-cascatasecret}
+      - MINIO_USE_SSL=false
+      - MINIO_REGION=us-east-1
+    volumes:
+      - ${CASCATA_DATA_DIR:-/cascata-data}/acme_challenge:/var/www/html
+      - ${CASCATA_DATA_DIR:-/cascata-data}/certs:/etc/letsencrypt
+      - ${CASCATA_DATA_DIR:-/cascata-data}/storage:/cascata/storage
+      - temp_data:/cascata/temp
+      - ${CASCATA_DATA_DIR:-/cascata-data}/nginx_dynamic:/etc/nginx/conf.d/dynamic
+      - /var/run/docker.sock:/var/run/docker.sock
+      - extension_payloads:/cascata_extensions:ro
+      # Unix socket para Hyper-Cluster (Zero-Network Hot-Path)
+      - cascata_sockets:/tmp/cascata_sockets
+    depends_on:
+      db:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+      nginx_controller:
+        condition: service_started
+      crypto_engine:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    networks:
+      - cascata_app
+      - cascata_data
+      - cascata_secure
+    restart: always
+
+  backend_data:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cascata-backend-data
+    env_file: .env
+    environment:
+      - SERVICE_TYPE=data
+      - SERVICE_MODE=DATA_PLANE
+      - SYSTEM_DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}
+      - SYSTEM_JWT_SECRET=${SYSTEM_JWT_SECRET}
+      - CASCATA_OTP_SECRET=${CASCATA_OTP_SECRET}
+      - CASCATA_OTP_ENABLED=${CASCATA_OTP_ENABLED:-false}
+      - PORT=3000
+      - DRAGONFLY_HOST=dragonfly
+      - DRAGONFLY_PORT=6379
+      - DB_DIRECT_HOST=db
+      - DB_DIRECT_PORT=5432
+      - DB_POOL_HOST=pgbouncer
+      - DB_POOL_PORT=6432
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_SUPERUSER=${DB_SUPERUSER:-postgres}
+      - DB_SUPERUSER_PASSWORD=${DB_SUPERUSER_PASSWORD:-postgres}
+      - STORAGE_ROOT=/cascata/storage
+      - MIGRATIONS_ROOT=/app/migrations
+      - TEMP_UPLOAD_ROOT=/cascata/temp
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - API_KEY=${GEMINI_API_KEY}
+      - ENGINE_URL=http://backend_engine:3000
+      - CRYPTO_ENGINE_URL=http://crypto_engine:3000
+      # MinIO Internal S3 Configuration (No exposed ports - secure by design)
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-cascataadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-cascatasecret}
+      - MINIO_USE_SSL=false
+      - MINIO_REGION=us-east-1
+    volumes:
+      - ${CASCATA_DATA_DIR:-/cascata-data}/storage:/cascata/storage
+      - temp_data:/cascata/temp
+      - cascata_sockets:/tmp/cascata_sockets
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      db:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+      backend_engine:
+        condition: service_started
+      crypto_engine:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    networks:
+      - cascata_app
+      - cascata_data
+      - cascata_secure
+    restart: always
+
+  # NOVO: Isolamento de Runtime (O "Airbag")
+  backend_engine:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cascata-backend-engine
+    env_file: .env
+    environment:
+      - SERVICE_TYPE=engine
+      - SERVICE_MODE=ROUTING_ENGINE
+      - SYSTEM_DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}
+      - SYSTEM_JWT_SECRET=${SYSTEM_JWT_SECRET}
+      - CASCATA_OTP_SECRET=${CASCATA_OTP_SECRET}
+      - CASCATA_OTP_ENABLED=${CASCATA_OTP_ENABLED:-false}
+      - PORT=3000
+      - DRAGONFLY_HOST=dragonfly
+      - DRAGONFLY_PORT=6379
+      - DB_DIRECT_HOST=db
+      - DB_DIRECT_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - CRYPTO_ENGINE_URL=http://crypto_engine:3000
+      - STORAGE_ROOT=/cascata/storage
+      # MinIO Internal S3 Configuration (No exposed ports - secure by design)
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-cascataadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-cascatasecret}
+      - MINIO_USE_SSL=false
+      - MINIO_REGION=us-east-1
+    volumes:
+      # Unix socket para Hyper-Cluster (Zero-Network Hot-Path)
+      - cascata_sockets:/tmp/cascata_sockets
+      # Storage compartilhado - TODOS os workers precisam ver o mesmo storage
+      - ${CASCATA_DATA_DIR:-/cascata-data}/storage:/cascata/storage
+    # Limite rígido de memória para conter scripts maliciosos
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    depends_on:
+      db:
+        condition: service_healthy
+      dragonfly:
+        condition: service_healthy
+      crypto_engine:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    networks:
+      - cascata_app # Precisa receber requisições do Data Plane
+      - cascata_data # Precisa acessar o Banco para executar queries
+      - cascata_secure
+    restart: always
+
+  # CERT-CONTROLLER SIDECAR
+  # Isolado: gerencia certificados sem afetar o backend principal
+  # NOTA: Se o build travar por falta de recursos, use:
+  #   1. ./build-cert-controller.sh (compila fora do Docker)
+  #   2. docker compose up -d (usa a imagem já construída)
+  cert_controller:
+    # Descomente a linha abaixo para usar imagem pré-construída:
+    # image: cascata-cert_controller:latest
+    build:
+      context: ./backend
+      dockerfile: cmd/cert-controller/Dockerfile
+      # Limitar recursos durante build para evitar travamento em VPS pequenas
+      x-bake:
+        memory: 512M
+        cpus: '1.0'
+    container_name: cascata-cert-controller
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    environment:
+      - DRAGONFLY_HOST=dragonfly
+      - DRAGONFLY_PORT=6379
+      - NGINX_CONTROLLER_URL=http://nginx_controller:3001
+      - BACKEND_CONTROL_URL=http://backend_control:3000
+      - INTERNAL_CTRL_SECRET=${INTERNAL_CTRL_SECRET}
+    volumes:
+      - ${CASCATA_DATA_DIR:-/cascata-data}/acme_challenge:/var/www/html
+      - ${CASCATA_DATA_DIR:-/cascata-data}/certs:/etc/letsencrypt
+      - ${CASCATA_DATA_DIR:-/cascata-data}/nginx_dynamic:/etc/nginx/conf.d/dynamic
+    depends_on:
+      dragonfly:
+        condition: service_healthy
+      nginx_controller:
+        condition: service_started
+    networks:
+      - cascata_app
+      - cascata_data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'cert-controller' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cascata-frontend
+    networks:
+      - cascata_public
+    restart: always
+
+  db:
+    build:
+      context: ./database
+    container_name: cascata-db
+    restart: always
+    # CMD definido no Dockerfile inclui shared_preload_libraries e listen_addresses
+    # SECURITY: Nenhuma porta exposta - PostgreSQL só acessível via rede cascata_data (internal)
+    environment:
+      PGDATA: /var/lib/postgresql/18/docker
+      POSTGRES_USER: ${DB_USER:-cascata_admin}
+      POSTGRES_PASSWORD: ${DB_PASS:-secure_pass}
+      POSTGRES_DB: ${DB_NAME:-cascata_system}
+    volumes:
+      - ${CASCATA_DATA_DIR:-/cascata-data}/pg:/var/lib/postgresql/18/docker
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - extension_payloads:/cascata_extensions
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-cascata_admin} -d ${DB_NAME:-cascata_system}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cascata_data
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: cascata-qdrant
+    restart: always
+    environment:
+      - QDRANT__TELEMETRY_DISABLED=true
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ${CASCATA_DATA_DIR:-/cascata-data}/qdrant:/qdrant/storage
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test: [ "CMD-SHELL", "sleep 3; exit 0" ]
+      interval: 5s
+      timeout: 5s
+      retries: 1
+      start_period: 2s
+    networks:
+      - cascata_data
+
+  dragonfly:
+    image: docker.dragonflydb.io/dragonflydb/dragonfly
+    container_name: cascata-dragonfly
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${CASCATA_DATA_DIR:-/cascata-data}/dragonfly:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cascata_data
+
+  # --- CRYPTO ENGINE (Go Service) ---
+  crypto_engine:
+    build:
+      context: ./crypto-engine
+      dockerfile: Dockerfile
+    container_name: cascata-crypto-engine
+    environment:
+      - CASCATA_MASTER_SECRET=${CASCATA_MASTER_SECRET}
+      - INTERNAL_CTRL_SECRET=${INTERNAL_CTRL_SECRET}
+      - PORT=3000
+    volumes:
+      - ${CASCATA_DATA_DIR:-/cascata-data}/crypto:/data/crypto
+      - /etc/machine-id:/etc/machine-id:ro  # Salt estável para KEK derivation
+    networks:
+      - cascata_secure
+    restart: always
+    healthcheck:
+      test: ["CMD", "/cce-healthcheck"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # OpenTelemetry Collector for multi-tenant log export
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: cascata-otel-collector
+    restart: always
+    environment:
+      - OTEL_LOG_LEVEL=info
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      - ${CASCATA_DATA_DIR:-/cascata-data}/otel-deadletter:/var/log/cascata/deadletter
+    networks:
+      - cascata_app
+      - cascata_data
+    depends_on:
+      - backend_control
+      - backend_data
+
+  # --- MINIO (S3-Compatible Local Storage) ---
+  # Internal only - NO EXPOSED PORTS. Access only via Cascata API/UI.
+  # Security: Complete isolation from internet, zero attack vectors.
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: cascata-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-cascataadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-cascatasecret}
+      - MINIO_BROWSER=off  # Disable web console - manage via Cascata only
+    volumes:
+      - ${CASCATA_DATA_DIR:-/cascata-data}/minio:/data
+    # NO PORTS EXPOSED - Internal Docker network only
+    networks:
+      - cascata_data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  cascata_public:
+    driver: bridge
+  cascata_app:
+    driver: bridge
+  cascata_data:
+    driver: bridge
+    internal: true
+  cascata_secure:
+    driver: bridge
+    internal: true
+
+volumes:
+  temp_data:
+  cascata_sockets:
+  extension_payloads:
+  minio_data:

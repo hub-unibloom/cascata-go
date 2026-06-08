@@ -1,0 +1,69 @@
+## Conceito das 3 Proteções
+
+### 1. **IP Binding** (Mais simples)
+**Como funciona:**
+- No login, salvamos o IP do usuário no token JWT (claim `ip: "3.238.33.182"`)
+- Em cada requisição, o middleware compara: `IP do token == IP da requisição`
+- Se diferente → rejeita com `401 Token bound to different IP`
+
+**Pro:** Token roubado de outro PC não funciona  
+**Contra:** Usuários com IP dinâmico (4G, WiFi móvel) precisam relogar  
+**Bypass:** Opção "Lembrar este dispositivo" = sem IP binding
+
+---
+
+### 2. **Device Fingerprinting** (Média complexidade)
+**Como funcionaria:**
+- Frontend coleta hash de características do navegador:
+  - User-Agent + linguagens + plugins + canvas WebGL + fonts
+  - Gera fingerprint único (ex: `a1b2c3d4...`)
+- Envia no login → salvamos no banco/redis vinculado à sessão
+- Em requisições, frontend manda fingerprint no header `X-Device-Fingerprint`
+- Backend valida se bate com o registrado
+
+**Pro:** Mesmo IP, navegador diferente = bloqueado  
+**Contra:** Atualização do navegador muda fingerprint → relogar  
+**Plus:** Detecta múltiplos logins do mesmo usuário em dispositivos diferentes
+
+---
+
+### 3. **Session Timeout Dinâmico** (2h com renovação)
+**Como funcionaria:**
+```json
+// Token JWT
+{
+  "exp": 1776112841,        // 2 horas fixo
+  "iat": 1776069641,
+  "last_activity": 1776072000,  // timestamp última ação
+  "role": "admin"
+}
+```
+
+- **Middleware em cada request:**
+  - Se `(now - last_activity) > 30 min` → renova `last_activity` no token
+  - Se `(now - iat) > 2 horas` → força relogin (hard limit)
+  
+- **Refresh automático:**
+  - Frontend detecta 5 min antes de expirar → chama `/api/control/refresh`
+  - Nova sessão de 2h criada (se usuário ativo)
+
+**Pro:** Inativo por 30 min = expira. Ativo = renova automaticamente  
+**Contra:** Usuário offline >2h = precisa logar de novo (aceitável)
+
+---
+
+## Integração com Sistema Atual
+
+| Componente | Mudança necessária |
+|------------|-------------------|
+| **Login** | Adicionar IP + fingerprint na sessão JWT |
+| **Middleware Auth** | Validar IP + fingerprint + renovar `last_activity` |
+| **Frontend** | Enviar fingerprint + lógica de refresh automático |
+| **Redis/DB** | Armazenar sessões ativas para invalidação remota |
+
+**Prioridade de implementação:**  
+1. IP Binding (rápido, alto impacto)  
+2. Timeout dinâmico (médio, boa UX)  
+3. Fingerprint (complexo, proteção extra)
+
+Quer que eu comece implementando algum específico?

@@ -1,0 +1,110 @@
+					cd ~/cascata
+					clear
+git fetch origin
+
+git checkout 20b2b8646536312ef2a7066ae16cb42f8b955790
+					sudo docker system prune -a --volumes -f
+					sudo docker system prune -a -f
+					sudo docker compose down
+					docker ps -q | xargs -I {} sh -c 'sudo truncate -s 0 $(docker inspect --format="{{.LogPath}}" {})'
+					clear
+					sudo docker compose up --build -d
+
+
+					cd ~/cascata
+					clear
+					git pull
+					sudo docker system prune -a --volumes -f
+					sudo docker system prune -a -f
+					sudo docker compose down
+					docker ps -q | xargs -I {} sh -c 'sudo truncate -s 0 $(docker inspect --format="{{.LogPath}}" {})'
+					clear
+					sudo docker compose up --build -d
+
+git pull
+cd ~/cascata && docker compose build frontend && docker compose up --build -d frontend
+
+cd ~/cascata && docker compose build backend_engine --no-cache --progress=plain 2>&1 | grep -E "ERROR|error:|undefined|cannot|^#[0-9]+ ERROR"
+
+
+cd ~/cascata && docker compose build backend_data --progress=plain 2>&1 | tail -50
+
+
+ curl -X POST "https://loja1.unibloom.com.br/nova"   -H "apikey: b9245720646104e902bc7e7ee1922770bcbf49ee0d2373a536617c01e2fc24be6b29c8c9d6e2aee5668f96bee27624ed796d24d5fb30b8ba08484f53d435dcff"   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInJvbGUiOiJhdXRoZW50aWNhdGVkIn0sImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJleHAiOjE3NzgzMDEzMTEsImZwdCI6ImE5ZDBmMDEyM2FiZTE4OWUiLCJpYXQiOjE3NzgyOTc3MTEsImlkZW50aWZpZXIiOiJUSEFMRVNAVU5JQkxPT00yLlNIT1AiLCJwcm92aWRlciI6ImVtYWlsIiwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJzdWIiOiI1N2E2MDM3My00Njk1LTQ1NTktYmZmYy02OWM4MTJjNDg5ZjIifQ.XWwVhI-pkt8Mjfxm_hQVaA-7v9wfxvyLOVc8U-AZTr4"   -H "Content-Type: application/json"   -d '{
+  "teste": "72255302"
+}'
+
+
+Para LOCAL (filesystem):
+
+Usa io.Copy para temp file, depois move (não é streaming perfeito, mas não carrega tudo em RAM)
+Limitado a 100MB para uploads proxy
+4. Background Jobs para Arquivos Grandes?
+NÃO ENCONTRADO no código atual. O que existe:
+
+✅ TEMP_UPLOAD_ROOT - limpeza de arquivos temporários
+✅ Queue system para automações (queue_automation.go)
+❌ NÃO tem queue específica para uploads assíncronos de arquivos grandes
+
+
+
+curl -X POST "https://dash.unibloom.com.br/api/data/jumne/auth/v1/signup" \
+  -H "apikey: 9c9945076aa11921bdb6fceb2520208896c03b22bea30446d69a0ad0b7289304c019b70fe33f86d7763b5848021b395470428234cb859fc5c7c1b46e6e1540bd" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "password": "secure_password_123",
+  "email": "user@example.com"
+}'
+
+curl -X POST "https://dash.unibloom.com.br/api/data/jumne/novax" \
+  -H "apikey: 9c9945076aa11921bdb6fceb2520208896c03b22bea30446d69a0ad0b7289304c019b70fe33f86d7763b5848021b395470428234cb859fc5c7c1b46e6e1540bd" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInJvbGUiOiJhdXRoZW50aWNhdGVkIn0sImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJleHAiOjE3NzgzMTQyODUsImZwdCI6ImY3ODczMTYwYWQ3MDU1NjAiLCJpYXQiOjE3NzgzMTA2ODUsImlkZW50aWZpZXIiOiJ1c2VyQGV4YW1wbGUyLmNvbSIsInByb3ZpZGVyIjoiZW1haWwiLCJyb2xlIjoiYXV0aGVudGljYXRlZCIsInN1YiI6IjhkOGVjNzMwLTk1ZTYtNDkwNi1hYzcyLTIzY2JkZWQxOTQ2MCJ9.k4vyPgQXb5yYJJX-08bYR7mk37McrIpMPNvDkWYLCeg" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "nomy": "value"
+}'
+
+
+curl -X POST "https://dash.unibloom.com.br/api/data/jumne/megan" \
+  -H "apikey: 9c9945076aa11921bdb6fceb2520208896c03b22bea30446d69a0ad0b7289304c019b70fe33f86d7763b5848021b395470428234cb859fc5c7c1b46e6e1540bd" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInJvbGUiOiJhdXRoZW50aWNhdGVkIn0sImF1ZCI6ImF1dGhlbnRpY2F0ZWQiLCJleHAiOjE3NzgzMTc1OTQsImZwdCI6ImMzNTFlZDQxNGY1NDhkY2MiLCJpYXQiOjE3NzgzMTM5OTQsImlkZW50aWZpZXIiOiJ1c2VyQGV4YW1wbGUzLmNvbSIsInByb3ZpZGVyIjoiZW1haWwiLCJyb2xlIjoiYXV0aGVudGljYXRlZCIsInN1YiI6ImIwZGRiYmJiLWQ0MjctNDU3My1iZjI2LWQ3ZmYwZjE0Nzc2MiJ9.avOZrBnygonkergshBMC28V5-Q1lvGK9n_58-sEAnvc" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "teste": "text_value"
+}'
+
+
+
+
+		rm 	./install.sh
+				cd ~/cascata
+				sudo docker compose down -v
+
+				sudo docker system prune -a --volumes -f
+                sudo docker system prune -a -f
+
+				cd ~
+				rm -rf cascata
+
+				sudo docker ps -a	 
+				
+
+		curl -fsSL https://raw.githubusercontent.com/hub-unibloom/cascata-go/refs/heads/main/install.sh.txt -o install.sh.txt && mv install.sh.txt install.sh && chmod +x install.sh && ./install.sh
+
+
+cd cascata-go
+
+Ante e subir essa alterações,
+
+   W9[7xY1=t)Ld+gzV 
+	
+
+	Olha, temos uas oeções de onfiguações o gatilho webhook, aqui a primeira é o "Payload Transformation (Entrada)"
+aui no mapeao e ampos evemos efnii nome dad oluna e tipo do dado, sting, numei...et, os mesmo supotados aaqui "@contextScopeItemMention "
+
+assim essa esttua é que mapeoa paa que possamos odenaar o funionamento oeto o fluxo, obiviamente, poemos deixar vazio ou nãoo, ou seja seve omo filtro, omo paametizao tambem, mas, quando vazio, os daddos nele reebidos tambem oedm se apraa ambiente que não ontrrolamos sempe, tipo o hatsappp, que tem o popio padão e envio, envio,  entã
+
+
+---
+
+To com uma esejeo, olha só, se o fluxo e autntiação estiver ativo, devemos te o poder e izer se é somentee om jwwtoken ou se aesso om anonkey vale tbm, ahoq ue isso é impotante e se caso o fluxo for jwtoken, será o seguinte, o fluxo inteio vai girar em torno aquela onta, pois só asssim ertas varriaveis omo a e usuairo, e o poder e interar om o bano ed aos om o no DATA somente asim vamos onsegui interagir, poisss, nõ vamos etrui a segurnaaça o bano para isso, tanto é que se não tive logao,  não tem como interagi om o nó Database, 

@@ -1,0 +1,886 @@
+ubuntu@ip-172-26-3-236:~/cascata$                                       docker ps -q | xargs -I {} sh -c 'sudo truncate -s 0 $(docker inspect --format="{{.LogPath}}" {})'
+ubuntu@ip-172-26-3-236:~/cascata$                                       docker ps -q | xargs -I {} sh -c 'sudo truncate -s 0 $(docker inspect --format="{{.LogPath}}" {})'
+ubuntu@ip-172-26-3-236:~/cascata$ docker compose logs
+WARN[0000] The "CASCATA_OTP_SECRET" variable is not set. Defaulting to a blank string. 
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string. 
+WARN[0000] The "CASCATA_OTP_SECRET" variable is not set. Defaulting to a blank string. 
+WARN[0000] The "GEMINI_API_KEY" variable is not set. Defaulting to a blank string. 
+WARN[0000] The "CASCATA_OTP_SECRET" variable is not set. Defaulting to a blank string. 
+cascata-db  | 2026-05-17 19:33:28.242 UTC [244037] FATAL:  terminating connection due to administrator command
+cascata-db  | 2026-05-17 19:33:28.242 UTC [245478] FATAL:  terminating connection due to administrator command
+cascata-db  | 2026-05-17 19:33:28.243 UTC [244097] FATAL:  terminating connection due to administrator command
+cascata-db  | 2026-05-17 19:33:28.243 UTC [245483] FATAL:  terminating connection due to administrator command
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:31:50 +0000] "GET /manifest.json HTTP/1.1" 304 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1, 104.23.254.47"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:31:52 +0000] "GET /service-worker.js?v=cascata-v2 HTTP/1.1" 200 2198 "https://dash.unibloom.com.br/service-worker.js?v=cascata-v2" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1, 172.69.90.116"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:32:44 +0000] "GET / HTTP/1.1" 304 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1, 172.64.222.47"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:32:47 +0000] "GET /service-worker.js?v=cascata-v2 HTTP/1.1" 200 2198 "https://dash.unibloom.com.br/service-worker.js?v=cascata-v2" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1, 172.69.90.116"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:33:13 +0000] "GET / HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "66.132.172.198"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:33:14 +0000] "GET /favicon.ico HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "66.132.172.198"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:33:21 +0000] "GET /wiki HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "66.132.172.198"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:33:22 +0000] "GET /favicon.ico HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "66.132.172.198"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:33:22 +0000] "GET /f4blcwajn0m HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "66.132.172.198"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:33:23 +0000] "GET /favicon.ico HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "66.132.172.198"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:33:29 +0000] "GET / HTTP/1.1" 304 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1, 172.64.222.47"
+cascata-frontend  | 172.21.0.3 - - [17/May/2026:19:33:32 +0000] "GET /service-worker.js?v=cascata-v2 HTTP/1.1" 200 2198 "https://dash.unibloom.com.br/service-worker.js?v=cascata-v2" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1, 172.69.90.116"
+cascata-backend-data  | 2026/05/17 19:31:47 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data  | 2026/05/17 19:31:50 [ProjectResolver-LAZY] GET /api/data/tanacizinho/recycle-bin?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data  | 2026/05/17 19:31:50 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data  | 2026/05/17 19:31:50 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data  | 2026/05/17 19:31:50 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-data  | 2026/05/17 19:31:50 [2d011476f51d/YK6NdrouCg-000074] "GET http://dash.unibloom.com.br/api/data/tanacizinho/recycle-bin?schema=public HTTP/1.1" from 172.64.222.46 - 200 3B in 30.206767ms
+cascata-backend-data  | 2026/05/17 19:31:53 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-data  | 2026/05/17 19:31:53 [ProjectResolver-LAZY] GET /api/data/tanacizinho/enum-types | Host: dash.unibloom.com.br
+cascata-backend-data  | 2026/05/17 19:31:53 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data  | 2026/05/17 19:31:53 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data  | 2026/05/17 19:31:53 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data  | 2026/05/17 19:31:53 [RequireManagementRole] Path: /api/data/tanacizinho/enum-types, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend-data  | 2026/05/17 19:31:53 [RequireManagementRole] ACCESS GRANTED for /api/data/tanacizinho/enum-types
+cascata-backend-data  | 2026/05/17 19:31:53 [2d011476f51d/YK6NdrouCg-000075] "GET http://dash.unibloom.com.br/api/data/tanacizinho/enum-types HTTP/1.1" from 172.64.222.46 - 200 134B in 40.60924ms
+cascata-backend-data  | 2026/05/17 19:31:57 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data  | 2026/05/17 19:31:58 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-data  | 2026/05/17 19:32:07 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data  | 2026/05/17 19:32:09 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data  | 2026/05/17 19:32:09 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:31:46 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:31:50 [ProjectResolver-LAZY] GET /api/data/tanacizinho/schemas | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:31:50 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:31:50 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:31:50 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:31:50 [8bcaa5340b75/NiRpxIPUxQ-000074] "GET http://dash.unibloom.com.br/api/data/tanacizinho/schemas HTTP/1.1" from 172.64.222.46 - 200 95B in 35.474897ms
+cascata-backend-engine  | 2026/05/17 19:31:52 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:31:53 [ProjectResolver-LAZY] GET /api/data/tanacizinho/metadata | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:31:53 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:31:53 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/metadata, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:31:53 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/metadata, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:31:53 [8bcaa5340b75/NiRpxIPUxQ-000075] "GET http://dash.unibloom.com.br/api/data/tanacizinho/metadata HTTP/1.1" from 172.64.222.47 - 200 121B in 45.005585ms
+cascata-backend-engine  | 2026/05/17 19:31:56 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:31:57 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:32:06 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:32:09 [ProjectResolver-LAZY] GET /api/data/tanacizinho/schemas | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:09 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:09 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:32:09 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:32:09 [8bcaa5340b75/NiRpxIPUxQ-000076] "GET http://dash.unibloom.com.br/api/data/tanacizinho/schemas HTTP/1.1" from 172.64.222.47 - 200 95B in 30.665066ms
+cascata-backend-engine  | 2026/05/17 19:32:09 [SchemaCache] Invalidated all L1 caches and Project Struct for project tanacizinho (from pub/sub)
+cascata-backend-engine  | 2026/05/17 19:32:10 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:32:10 [8bcaa5340b75/NiRpxIPUxQ-000077] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables/tab1testemain/columns?schema=public HTTP/1.1" from 172.64.222.46 - 200 739B in 88.713077ms
+cascata-backend-engine  | 2026/05/17 19:32:10 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:32:10 [8bcaa5340b75/NiRpxIPUxQ-000078] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 26.842469ms
+cascata-backend-engine  | 2026/05/17 19:32:10 [ProjectResolver-LAZY] GET /api/data/tanacizinho/enum-types?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:32:10 [RequireManagementRole] Path: /api/data/tanacizinho/enum-types, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend-engine  | 2026/05/17 19:32:10 [RequireManagementRole] ACCESS GRANTED for /api/data/tanacizinho/enum-types
+cascata-backend-engine  | 2026/05/17 19:32:10 [8bcaa5340b75/NiRpxIPUxQ-000079] "GET http://dash.unibloom.com.br/api/data/tanacizinho/enum-types?schema=public HTTP/1.1" from 172.64.222.47 - 200 69B in 20.633606ms
+cascata-backend-engine  | 2026/05/17 19:32:12 [Firehose] Flushing 4 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:32:16 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:32:26 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:32:36 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:32:41 [ProjectResolver-LAZY] POST /api/data/tanacizinho/branch/create | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:41 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:41 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/create, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:32:41 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/create, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:32:41 [8bcaa5340b75/NiRpxIPUxQ-000080] "POST http://dash.unibloom.com.br/api/data/tanacizinho/branch/create HTTP/1.1" from 172.64.222.46 - 201 412B in 24.409691ms
+cascata-backend-engine  | 2026/05/17 19:32:42 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:32:44 [ProjectResolver-LAZY] GET /api/data/tanacizinho/schemas | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:44 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:44 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:32:44 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:32:44 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:32:44 [8bcaa5340b75/NiRpxIPUxQ-000081] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/schemas HTTP/1.1" from 172.64.222.47 - 500 29B in 31.710594ms
+cascata-backend-engine  | 2026/05/17 19:32:44 [ProjectResolver-LAZY] GET /api/data/tanacizinho/schemas | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:44 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:44 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:32:44 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:32:44 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:32:44 [8bcaa5340b75/NiRpxIPUxQ-000082] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/schemas HTTP/1.1" from 172.64.222.46 - 200 95B in 60.153656ms
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend-engine  | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:32:45 [Realtime] 🟢 Started LISTEN for tanacizinho:live
+cascata-backend-engine  | 2026/05/17 19:32:45 [8bcaa5340b75/NiRpxIPUxQ-000083] "GET http://dash.unibloom.com.br/api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" from 172.64.222.47 - 200 74B in 88.303493ms
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:32:45 [8bcaa5340b75/NiRpxIPUxQ-000084] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 18.825957ms
+cascata-backend-data    | 2026/05/17 19:32:09 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:09 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-data    | 2026/05/17 19:32:09 [2d011476f51d/YK6NdrouCg-000076] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables?schema=public HTTP/1.1" from 172.64.222.46 - 200 45B in 25.213807ms
+cascata-backend-data    | 2026/05/17 19:32:09 [SchemaCache] Invalidated all L1 caches and Project Struct for project tanacizinho (from pub/sub)
+cascata-backend-data    | 2026/05/17 19:32:10 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-data    | 2026/05/17 19:32:10 [2d011476f51d/YK6NdrouCg-000077] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 70.474811ms
+cascata-backend-data    | 2026/05/17 19:32:10 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend-engine  | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver-LAZY] POST /api/data/tanacizinho/query?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:10 [2d011476f51d/YK6NdrouCg-000078] "GET http://dash.unibloom.com.br/api/data/tanacizinho/ui-settings/tab1testemain?schema=public HTTP/1.1" from 172.64.222.46 - 200 3B in 17.625009ms
+cascata-backend-data    | 2026/05/17 19:32:10 [ProjectResolver-LAZY] GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend-data    | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:32:10 [Realtime] 🟢 Started LISTEN for tanacizinho:live
+cascata-backend-data    | 2026/05/17 19:32:13 [Firehose] Flushing 3 audit logs to persistence...
+cascata-backend-data    | 2026/05/17 19:32:14 [ProjectResolver-LAZY] GET /api/data/tanacizinho/branch/list | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:14 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:14 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:14 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:32:14 [2d011476f51d/YK6NdrouCg-000080] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/list HTTP/1.1" from 172.64.222.47 - 200 26B in 24.460593ms
+cascata-backend-data    | 2026/05/17 19:32:17 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data    | 2026/05/17 19:32:18 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-data    | 2026/05/17 19:32:27 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data    | 2026/05/17 19:32:37 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data    | 2026/05/17 19:32:43 [ProjectResolver-LAZY] POST /api/data/tanacizinho/branch/access | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:43 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:43 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/access, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:43 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/access, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-pgbouncer       | 2026-05-17 19:31:50.077 UTC [1] LOG C-0x73f51a746f80: (nodb)/(nouser)@172.19.0.7:36570 registered new auto-database: cascata_tanacizinho
+cascata-pgbouncer       | 2026-05-17 19:31:50.077 UTC [1] LOG C-0x73f51a746f80: cascata_tanacizinho/cascata_admin@172.19.0.7:36570 login attempt: db=cascata_tanacizinho user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:31:50.083 UTC [1] LOG S-0x73f51a73c9d0: cascata_tanacizinho/cascata_admin@172.19.0.5:5432 new connection to server (from 172.19.0.6:46736)
+cascata-pgbouncer       | 2026-05-17 19:31:50.285 UTC [1] LOG C-0x73f51a7463e0: cascata_tanacizinho/cascata_admin@172.19.0.10:34010 login attempt: db=cascata_tanacizinho user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:31:50.389 UTC [1] LOG C-0x73f51a7469b0: cascata_tanacizinho/cascata_admin@172.19.0.9:33148 login attempt: db=cascata_tanacizinho user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:32:09.212 UTC [1] LOG C-0x73f51a746f80: cascata_tanacizinho/cascata_admin@172.19.0.7:36570 closing because: client close request (age=19s)
+cascata-pgbouncer       | 2026-05-17 19:32:09.875 UTC [1] LOG C-0x73f51a746f80: cascata_tanacizinho/cascata_admin@172.19.0.7:38186 login attempt: db=cascata_tanacizinho user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:32:10.090 UTC [1] LOG S-0x73f51a73c6e8: cascata_tanacizinho/cascata_admin@172.19.0.5:5432 new connection to server (from 172.19.0.6:52328)
+cascata-pgbouncer       | 2026-05-17 19:32:10.106 UTC [1] LOG C-0x73f51a7466c8: cascata_tanacizinho/cascata_admin@172.19.0.9:56414 login attempt: db=cascata_tanacizinho user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:32:31.916 UTC [1] LOG stats: 0 xacts/s, 0 queries/s, 0 client parses/s, 0 server parses/s, 0 binds/s, in 128 B/s, out 70 B/s, xact 7450 us, query 4694 us, wait 1625 us
+cascata-pgbouncer       | 2026-05-17 19:32:44.758 UTC [1] LOG C-0x73f51a747268: (nodb)/(nouser)@172.19.0.9:41636 registered new auto-database: cascata_tanacizinho_branchbobateste_env
+cascata-pgbouncer       | 2026-05-17 19:32:44.758 UTC [1] LOG C-0x73f51a747268: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.9:41636 login attempt: db=cascata_tanacizinho_branchbobateste_env user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:32:44.762 UTC [1] LOG S-0x73f51a73ccb8: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.5:5432 new connection to server (from 172.19.0.6:50004)
+cascata-pgbouncer       | 2026-05-17 19:32:44.765 UTC [1] LOG C-0x73f51a747e08: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.10:47162 login attempt: db=cascata_tanacizinho_branchbobateste_env user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:32:44.780 UTC [1] LOG S-0x73f51a73c400: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.5:5432 new connection to server (from 172.19.0.6:50018)
+cascata-pgbouncer       | 2026-05-17 19:32:44.964 UTC [1] LOG C-0x73f51a746c98: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.7:58450 login attempt: db=cascata_tanacizinho_branchbobateste_env user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:33:12.355 UTC [1] LOG C-0x73f51a747268: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.9:41636 closing because: client close request (age=27s)
+cascata-pgbouncer       | 2026-05-17 19:33:12.979 UTC [1] LOG C-0x73f51a747b20: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.9:59684 login attempt: db=cascata_tanacizinho_branchbobateste_env user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:33:13.285 UTC [1] LOG C-0x73f51a747268: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.9:59706 login attempt: db=cascata_tanacizinho_branchbobateste_env user=cascata_admin tls=no replication=no
+cascata-pgbouncer       | 2026-05-17 19:33:28.014 UTC [1] LOG C-0x73f51a747838: cascata_tanacizinho_branchbobateste_env/cascata_admin@172.19.0.7:59232 login attempt: db=cascata_tanacizinho_branchbobateste_env user=cascata_admin tls=no replication=no
+cascata-backend-data    | 2026/05/17 19:32:44 [DatabaseService] Public schema permissions initialized for database: cascata_tanacizinho_branchbobateste_env
+cascata-pgbouncer       | 2026-05-17 19:33:28.049 UTC [1] LOG C-0x73f51a747550: cascata_tanacizinho/cascata_admin@172.19.0.7:59246 login attempt: db=cascata_tanacizinho user=cascata_admin tls=no replication=no
+cascata-backend-engine  | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:32:45 [RunRawQuery] Auth Debug - Project: tanacizinho, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend-engine  | 2026/05/17 19:32:45 [RunRawQuery] ACCESS GRANTED for project tanacizinho
+cascata-backend-engine  | 2026/05/17 19:32:45 [SECURITY_EVENT] type=ADMIN_SQL_QUERY project=tanacizinho table=raw_query column= severity=info | map[cron_count:0 params_count:0 regular_count:1 source:dashboard_sql_editor sql_length:57 sql_preview:SELECT count(*)::int as total FROM public."tab1testemain" statement_count:1]
+cascata-backend-engine  | 2026/05/17 19:32:45 [8bcaa5340b75/NiRpxIPUxQ-000086] "POST http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/query?schema=public HTTP/1.1" from 172.64.222.47 - 200 36B in 27.090181ms
+cascata-backend-engine  | 2026/05/17 19:32:46 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:32:47 [Firehose] Flushing 5 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:32:56 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:33:06 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:33:12 [ProjectResolver-LAZY] POST /api/data/tanacizinho/query?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:12 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:12 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:12 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:33:12 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:12 [RunRawQuery] Auth Debug - Project: tanacizinho, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend-engine  | 2026/05/17 19:33:12 [RunRawQuery] ACCESS GRANTED for project tanacizinho
+cascata-backend-engine  | 2026/05/17 19:33:12 [SECURITY_EVENT] type=ADMIN_SQL_QUERY project=tanacizinho table=raw_query column= severity=info | map[cron_count:0 params_count:0 regular_count:3 source:dashboard_sql_editor sql_length:438 sql_preview:-- Create table: tab2testbrancchone
+cascata-backend-engine  | CREATE TABLE IF NOT EXISTS public.tab2testbrancchone (
+cascata-backend-engine  |     id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+cascata-backend-engine  |     created_at timestamptz NOT NULL DEFAULT now(), statement_count:3]
+cascata-backend-engine  | 2026/05/17 19:33:12 [8bcaa5340b75/NiRpxIPUxQ-000087] "POST http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/query?schema=public HTTP/1.1" from 172.64.222.47 - 200 25B in 28.320631ms
+cascata-backend-engine  | 2026/05/17 19:33:12 [PoolService] Reloaded pool for cascata_tanacizinho_branchbobateste_env (key: cascata_tanacizinho_branchbobateste_env_pool)
+cascata-backend-engine  | 2026/05/17 19:33:12 [Firehose] Flushing 2 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:33:12 [ProjectResolver-LAZY] GET /api/data/tanacizinho/recycle-bin?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:12 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:12 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:12 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:33:12 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:12 [SchemaCache] Invalidated all L1 caches and Project Struct for project tanacizinho (from pub/sub)
+cascata-backend-data    | 2026/05/17 19:32:44 [AccessBranch] Cookie set for branch: branchbobateste
+cascata-backend-data    | 2026/05/17 19:32:44 [2d011476f51d/YK6NdrouCg-000081] "POST http://dash.unibloom.com.br/api/data/tanacizinho/branch/access HTTP/1.1" from 172.64.222.46 - 200 744B in 486.071489ms
+cascata-backend-data    | 2026/05/17 19:32:44 [2d011476f51d/YK6NdrouCg-000079] "GET http://dash.unibloom.com.br/api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" from 172.64.222.47 - 200 90B in 34.198680199s
+cascata-backend-data    | 2026/05/17 19:32:44 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:44 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:44 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:44 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-data    | 2026/05/17 19:32:44 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:32:44 [2d011476f51d/YK6NdrouCg-000082] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables?schema=public HTTP/1.1" from 172.64.222.47 - 200 45B in 68.418815ms
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2 | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:32:45 [2d011476f51d/YK6NdrouCg-000083] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2 HTTP/1.1" from 172.64.222.47 - 200 3B in 29.169812ms
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:32:45 [2d011476f51d/YK6NdrouCg-000084] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/columns?schema=public HTTP/1.1" from 172.64.222.46 - 200 739B in 47.447966ms
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:32:45 [2d011476f51d/YK6NdrouCg-000085] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/ui-settings/tab1testemain?schema=public HTTP/1.1" from 172.64.222.46 - 200 3B in 32.95428ms
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/enum-types?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:32:45 [RequireManagementRole] Path: /api/data/tanacizinho/enum-types, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend-data    | 2026/05/17 19:32:45 [RequireManagementRole] ACCESS GRANTED for /api/data/tanacizinho/enum-types
+cascata-backend-data    | 2026/05/17 19:32:45 [2d011476f51d/YK6NdrouCg-000086] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/enum-types?schema=public HTTP/1.1" from 172.64.222.46 - 200 69B in 25.28045ms
+cascata-backend-data    | 2026/05/17 19:32:47 [ProjectResolver-LAZY] GET /api/data/tanacizinho/enum-types | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:32:47 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:32:47 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:32:47 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:32:47 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:32:47 [RequireManagementRole] Path: /api/data/tanacizinho/enum-types, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend-data    | 2026/05/17 19:32:47 [RequireManagementRole] ACCESS GRANTED for /api/data/tanacizinho/enum-types
+cascata-backend-data    | 2026/05/17 19:32:47 [2d011476f51d/YK6NdrouCg-000087] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/enum-types HTTP/1.1" from 172.64.222.46 - 200 134B in 46.611862ms
+cascata-backend-data    | 2026/05/17 19:32:47 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data    | 2026/05/17 19:32:48 [Firehose] Flushing 7 audit logs to persistence...
+cascata-backend-data    | 2026/05/17 19:32:57 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data    | 2026/05/17 19:33:07 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data    | 2026/05/17 19:33:12 [ProjectResolver-LAZY] GET /api/data/tanacizinho/schemas | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:12 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:12 [8bcaa5340b75/NiRpxIPUxQ-000088] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/recycle-bin?schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 41.00425ms
+cascata-backend-engine  | 2026/05/17 19:33:13 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:13 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:13 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:13 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:33:13 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:13 [8bcaa5340b75/NiRpxIPUxQ-000089] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/columns?schema=public HTTP/1.1" from 172.64.222.46 - 200 739B in 70.916236ms
+cascata-backend-engine  | 2026/05/17 19:33:16 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:33:17 [Firehose] Flushing 2 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectResolver-LAZY] GET /api/data/tanacizinho/branch/diff?source=branchbobateste&target=main | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:24 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/diff, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:24 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/diff, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:24 [INFO] Starting deploy merge [project tanacizinho source branchbobateste target main]
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Initializing all managed schemas for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Auth schema initialized for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.ui_settings ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.automations ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.rate_limits ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.api_key_groups ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.api_keys ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.project_extensions ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Security Lock Engine (TIER-3 PADLOCK) injected for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Public schema permissions initialized for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] All managed schemas initialized for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend-data    | 2026/05/17 19:33:12 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:12 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-data    | 2026/05/17 19:33:12 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:33:12 [2d011476f51d/YK6NdrouCg-000088] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/schemas HTTP/1.1" from 172.64.222.46 - 200 95B in 36.92307ms
+cascata-backend-data    | 2026/05/17 19:33:12 [SchemaCache] Invalidated all L1 caches and Project Struct for project tanacizinho (from pub/sub)
+cascata-backend-data    | 2026/05/17 19:33:13 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:13 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:33:13 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:13 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:33:13 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:33:13 [2d011476f51d/YK6NdrouCg-000089] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/ui-settings/tab1testemain?schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 48.869315ms
+cascata-backend-data    | 2026/05/17 19:33:13 [Firehose] Flushing 2 audit logs to persistence...
+cascata-backend-data    | 2026/05/17 19:33:17 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data    | 2026/05/17 19:33:22 [ProjectResolver-LAZY] GET /api/data/tanacizinho/branch/list | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:22 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:33:22 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:22 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:33:22 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:33:22 [2d011476f51d/YK6NdrouCg-000090] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/branch/list HTTP/1.1" from 172.64.222.47 - 200 887B in 19.711597ms
+cascata-backend-data    | 2026/05/17 19:33:23 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-data    | 2026/05/17 19:33:27 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data    | 2026/05/17 19:33:28 [Realtime] Notification error for tanacizinho:live: FATAL: terminating connection due to administrator command (SQLSTATE 57P01)
+cascata-backend-data    | 2026/05/17 19:33:29 [ProjectResolver-LAZY] GET /api/data/tanacizinho/schemas | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:29 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:33:29 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:29 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-data    | 2026/05/17 19:33:29 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-data    | 2026/05/17 19:33:29 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:33:29 [2d011476f51d/YK6NdrouCg-000091] "GET http://dash.unibloom.com.br/api/data/tanacizinho/schemas HTTP/1.1" from 172.64.222.46 - 500 29B in 21.525254ms
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:33:30 [2d011476f51d/YK6NdrouCg-000092] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables?schema=public HTTP/1.1" from 172.64.222.47 - 200 93B in 47.032942ms
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2 | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Initializing all managed schemas for database: cascata_tanacizinho
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Auth schema initialized for database: cascata_tanacizinho
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.ui_settings ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.automations ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.rate_limits ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.api_key_groups ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.api_keys ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Tenant table system.project_extensions ensured
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Security Lock Engine (TIER-3 PADLOCK) injected for database: cascata_tanacizinho
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] Public schema permissions initialized for database: cascata_tanacizinho
+cascata-backend-engine  | 2026/05/17 19:33:24 [DatabaseService] All managed schemas initialized for database: cascata_tanacizinho
+cascata-backend-engine  | [DiffEngine] Phase tables: generated 1 statements in 12.158614ms
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | [DiffEngine] Phase rls: generated 1 statements in 34.49218ms
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | 2026/05/17 19:33:24 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend-engine  | [DiffEngine] Phase triggers: generated 1 statements in 33.021921ms
+cascata-backend         | 2026/05/17 19:31:45 [ProjectResolver-LAZY] POST /api/control/projects | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:31:45 [HostGuard] Project nil - Method: POST, Path: /api/control/projects
+cascata-backend         | 2026/05/17 19:31:45 [CascataAuth] Validating token for /api/control/projects - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend         | 2026/05/17 19:31:45 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects, role: service_role
+cascata-backend         | 2026/05/17 19:31:45 [RequireManagementRole] Path: /api/control/projects, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:31:45 [RequireManagementRole] ACCESS GRANTED for /api/control/projects
+cascata-backend         | 2026/05/17 19:31:45 [CreateProject] Generated anon_key automatically for project tanacizinho
+cascata-backend         | 2026/05/17 19:31:45 [CreateProject] Generated service_key automatically for project tanacizinho
+cascata-backend         | 2026/05/17 19:31:45 [CreateProject] Generated jwt_secret automatically for project tanacizinho
+cascata-backend         | 2026/05/17 19:31:45 [DatabaseService] Initializing all managed schemas for database: cascata_tanacizinho
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Auth schema initialized for database: cascata_tanacizinho
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Tenant table system.ui_settings ensured
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Tenant table system.automations ensured
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Tenant table system.rate_limits ensured
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Tenant table system.api_key_groups ensured
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Tenant table system.api_keys ensured
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Tenant table system.project_extensions ensured
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Security Lock Engine (TIER-3 PADLOCK) injected for database: cascata_tanacizinho
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] Public schema permissions initialized for database: cascata_tanacizinho
+cascata-backend         | 2026/05/17 19:31:46 [DatabaseService] All managed schemas initialized for database: cascata_tanacizinho
+cascata-backend         | 2026/05/17 19:31:46 [CreateProject] Created physical 'default' bucket for project tanacizinho at /cascata/storage/tanacizinho/default
+cascata-backend         | 2026/05/17 19:31:46 [CreateProject] JWT secret cached for project tanacizinho
+cascata-backend         | 2026/05/17 19:31:46 [23b9ec27294a/Et9OQ1Q44i-000109] "POST http://dash.unibloom.com.br/api/control/projects HTTP/1.1" from 172.64.222.46 - 200 142B in 290.4242ms
+cascata-backend         | 2026/05/17 19:31:46 [ProjectResolver-LAZY] GET /api/control/projects | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:31:46 [HostGuard] Project nil - Method: GET, Path: /api/control/projects
+cascata-backend         | 2026/05/17 19:31:46 [CascataAuth] Validating token for /api/control/projects - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend         | 2026/05/17 19:31:46 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects, role: service_role
+cascata-backend-data    | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:33:30 [2d011476f51d/YK6NdrouCg-000093] "GET http://dash.unibloom.com.br/api/data/tanacizinho/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2 HTTP/1.1" from 172.64.222.46 - 200 3B in 22.147572ms
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend-data    | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-data    | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:31:46 [RequireManagementRole] Path: /api/control/projects, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:31:46 [RequireManagementRole] ACCESS GRANTED for /api/control/projects
+cascata-backend         | 2026/05/17 19:31:46 [23b9ec27294a/Et9OQ1Q44i-000110] "GET http://dash.unibloom.com.br/api/control/projects HTTP/1.1" from 172.64.222.46 - 200 410B in 1.890642ms
+cascata-backend         | 2026/05/17 19:31:46 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:31:50 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:31:50 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:31:50 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:31:50 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:31:50 [23b9ec27294a/Et9OQ1Q44i-000111] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables?schema=public HTTP/1.1" from 172.64.222.46 - 200 3B in 81.617214ms
+cascata-backend         | 2026/05/17 19:31:50 [ProjectResolver-LAZY] GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:31:50 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:31:50 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend         | 2026/05/17 19:31:50 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:31:50 [ProjectResolver-LAZY] GET /api/control/system/settings | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:31:50 [HostGuard] Project nil - Method: GET, Path: /api/control/system/settings
+cascata-backend         | 2026/05/17 19:31:50 [CascataAuth] Validating token for /api/control/system/settings - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend         | 2026/05/17 19:31:50 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/system/settings, role: service_role
+cascata-backend         | 2026/05/17 19:31:50 [RequireManagementRole] Path: /api/control/system/settings, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:31:50 [RequireManagementRole] ACCESS GRANTED for /api/control/system/settings
+cascata-backend         | 2026/05/17 19:31:50 [23b9ec27294a/Et9OQ1Q44i-000113] "GET http://dash.unibloom.com.br/api/control/system/settings HTTP/1.1" from 172.64.222.47 - 200 33B in 2.498964ms
+cascata-backend         | 2026/05/17 19:31:50 [Realtime] 🟢 Started LISTEN for tanacizinho:live
+cascata-backend         | 2026/05/17 19:31:52 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend         | 2026/05/17 19:31:56 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:32:06 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:32:09 [ProjectResolver-LAZY] POST /api/data/tanacizinho/query?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:09 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:09 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:09 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:32:09 [RunRawQuery] Auth Debug - Project: tanacizinho, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:32:09 [RunRawQuery] ACCESS GRANTED for project tanacizinho
+cascata-backend         | 2026/05/17 19:32:09 [SECURITY_EVENT] type=ADMIN_SQL_QUERY project=tanacizinho table=raw_query column= severity=info | map[cron_count:0 params_count:0 regular_count:2 source:dashboard_sql_editor sql_length:333 sql_preview:-- Create table: tab1testemain
+cascata-backend         | CREATE TABLE IF NOT EXISTS public.tab1testemain (
+cascata-backend         |     id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+cascata-backend         |     created_at timestamptz NOT NULL DEFAULT now(),
+cascata-backend         |     updat statement_count:2]
+cascata-backend         | 2026/05/17 19:32:09 [23b9ec27294a/Et9OQ1Q44i-000114] "POST http://dash.unibloom.com.br/api/data/tanacizinho/query?schema=public HTTP/1.1" from 172.64.222.46 - 200 25B in 24.584768ms
+cascata-backend-engine  | [DiffEngine] Phase permissions: generated 22 statements in 32.596723ms
+cascata-backend-engine  | [DiffEngine] Total diff completed in 532.623884ms with 25 statements
+cascata-backend-engine  | 2026/05/17 19:33:24 [INFO] Diff generated [statements 25 phases 7]
+cascata-backend-engine  | 2026/05/17 19:33:24 [INFO] Starting dry run [project tanacizinho env main statements 25]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 1 preview CREATE TABLE IF NOT EXISTS public.tab2testbranccho...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 2 preview CREATE POLICY master_system_policy ON public.tab2t...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 3 preview CREATE OR REPLACE TRIGGER trg_dynamic_locks_tab2te...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 4 preview GRANT SELECT ON TABLE public.tab1testemain TO anon...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 5 preview GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE publ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 6 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v1 ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 7 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v1 ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 8 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v1m...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 9 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v1m...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 10 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v3 ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 11 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v3 ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 12 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v4 ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 13 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v4 ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 14 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v5 ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 15 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v5 ...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 16 preview GRANT EXECUTE ON FUNCTION public.uuid_nil TO anon;]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 17 preview GRANT EXECUTE ON FUNCTION public.uuid_nil TO authe...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 18 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_dns TO an...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 19 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_dns TO au...]
+cascata-backend         | 2026/05/17 19:32:09 [PoolService] Reloaded pool for cascata_tanacizinho (key: cascata_tanacizinho_pool)
+cascata-backend         | 2026/05/17 19:32:09 [ProjectResolver-LAZY] GET /api/control/projects | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:09 [HostGuard] Project nil - Method: GET, Path: /api/control/projects
+cascata-backend         | 2026/05/17 19:32:09 [CascataAuth] Validating token for /api/control/projects - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend         | 2026/05/17 19:32:09 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects, role: service_role
+cascata-backend         | 2026/05/17 19:32:09 [RequireManagementRole] Path: /api/control/projects, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:32:09 [RequireManagementRole] ACCESS GRANTED for /api/control/projects
+cascata-backend         | 2026/05/17 19:32:09 [23b9ec27294a/Et9OQ1Q44i-000115] "GET http://dash.unibloom.com.br/api/control/projects HTTP/1.1" from 172.64.222.46 - 200 410B in 2.996318ms
+cascata-backend         | 2026/05/17 19:32:09 [ProjectResolver-LAZY] GET /api/data/tanacizinho/recycle-bin?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:09 [ProjectResolver-LAZY] PATCH /api/control/projects/tanacizinho | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:09 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:09 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:09 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:32:09 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:09 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/control/projects/tanacizinho, Method: PATCH, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:09 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/control/projects/tanacizinho, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:32:09 [CascataAuth] Validating token for /api/control/projects/tanacizinho - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend         | 2026/05/17 19:32:09 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects/tanacizinho, role: service_role
+cascata-backend         | 2026/05/17 19:32:09 [RequireManagementRole] Path: /api/control/projects/tanacizinho, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:32:09 [RequireManagementRole] ACCESS GRANTED for /api/control/projects/tanacizinho
+cascata-backend         | 2026/05/17 19:32:09 [23b9ec27294a/Et9OQ1Q44i-000116] "GET http://dash.unibloom.com.br/api/data/tanacizinho/recycle-bin?schema=public HTTP/1.1" from 172.64.222.46 - 200 3B in 40.063903ms
+cascata-backend         | 2026/05/17 19:32:09 [SchemaCache] Invalidated ALL cached schemas for project tanacizinho (0 keys deleted)
+cascata-backend         | 2026/05/17 19:32:09 [AdminController] Schema cache invalidated for project tanacizinho due to metadata update
+cascata-backend         | 2026/05/17 19:32:09 [SchemaCache] Invalidated all L1 caches and Project Struct for project tanacizinho (from pub/sub)
+cascata-backend         | 2026/05/17 19:32:09 [23b9ec27294a/Et9OQ1Q44i-000117] "PATCH http://dash.unibloom.com.br/api/control/projects/tanacizinho HTTP/1.1" from 172.64.222.46 - 200 16B in 55.793292ms
+cascata-backend         | 2026/05/17 19:32:10 [23b9ec27294a/Et9OQ1Q44i-000112] "GET http://dash.unibloom.com.br/api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" from 172.64.222.47 - 200 82B in 19.668356374s
+cascata-backend         | 2026/05/17 19:32:10 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 20 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_oid TO an...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 21 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_oid TO au...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 22 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_url TO an...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 23 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_url TO au...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_x500 TO a...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [DEBUG] Validating statement [index 25 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_x500 TO a...]
+cascata-backend-engine  | 2026/05/17 19:33:25 [INFO] Dry run completed [success true duration 69.8341ms sql_count 25]
+cascata-backend-engine  | 2026/05/17 19:33:25 [INFO] Dry run passed [validated 25]
+cascata-backend-engine  | 2026/05/17 19:33:25 [8bcaa5340b75/NiRpxIPUxQ-000090] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/branch/diff?source=branchbobateste&target=main HTTP/1.1" from 172.64.222.47 - 200 6864B in 620.018251ms
+cascata-backend-engine  | 2026/05/17 19:33:26 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:33:27 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:33:29 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:29 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:32:10 [23b9ec27294a/Et9OQ1Q44i-000118] "GET http://dash.unibloom.com.br/api/data/tanacizinho/ui-settings/tab1testemain?schema=public HTTP/1.1" from 172.64.222.46 - 200 3B in 33.966812ms
+cascata-backend         | 2026/05/17 19:32:10 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:32:10 [23b9ec27294a/Et9OQ1Q44i-000119] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables/tab1testemain/columns?schema=public HTTP/1.1" from 172.64.222.46 - 200 739B in 31.727792ms
+cascata-backend         | 2026/05/17 19:32:10 [ProjectResolver-LAZY] POST /api/data/tanacizinho/query?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:10 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:10 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:10 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:32:10 [RunRawQuery] Auth Debug - Project: tanacizinho, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:32:10 [RunRawQuery] ACCESS GRANTED for project tanacizinho
+cascata-backend         | 2026/05/17 19:32:10 [SECURITY_EVENT] type=ADMIN_SQL_QUERY project=tanacizinho table=raw_query column= severity=info | map[cron_count:0 params_count:0 regular_count:1 source:dashboard_sql_editor sql_length:57 sql_preview:SELECT count(*)::int as total FROM public."tab1testemain" statement_count:1]
+cascata-backend         | 2026/05/17 19:32:10 [23b9ec27294a/Et9OQ1Q44i-000120] "POST http://dash.unibloom.com.br/api/data/tanacizinho/query?schema=public HTTP/1.1" from 172.64.222.46 - 200 36B in 21.354397ms
+cascata-backend         | 2026/05/17 19:32:12 [Firehose] Flushing 8 audit logs to persistence...
+cascata-backend         | 2026/05/17 19:32:16 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:32:26 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/05/17 19:33:29 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:29 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:33:29 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-engine  | 2026/05/17 19:33:29 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:29 [8bcaa5340b75/NiRpxIPUxQ-000085] "GET http://dash.unibloom.com.br/api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" from 172.64.222.46 - 200 90B in 44.396186145s
+cascata-backend-engine  | 2026/05/17 19:33:29 [8bcaa5340b75/NiRpxIPUxQ-000091] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables?schema=public HTTP/1.1" from 172.64.222.46 - 500 29B in 26.222307ms
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend-engine  | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/realtime, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:33:30 [8bcaa5340b75/NiRpxIPUxQ-000092] "GET http://dash.unibloom.com.br/api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" from 172.64.222.47 - 200 74B in 502.960865ms
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:32:36 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:32:41 [ProjectResolver-LAZY] GET /api/data/tanacizinho/branch/list | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:41 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:41 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:41 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:32:41 [23b9ec27294a/Et9OQ1Q44i-000121] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/list HTTP/1.1" from 172.64.222.47 - 200 778B in 17.234529ms
+cascata-backend         | 2026/05/17 19:32:42 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend         | 2026/05/17 19:32:44 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:44 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:44 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:44 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:33:30 [8bcaa5340b75/NiRpxIPUxQ-000093] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 68.090143ms
+cascata-pgbouncer       | 2026-05-17 19:33:28.242 UTC [1] WARNING S-0x73f51a73c6e8: cascata_tanacizinho/cascata_admin@172.19.0.5:5432 got packet 'E' from server when not linked
+cascata-pgbouncer       | 2026-05-17 19:33:28.242 UTC [1] WARNING S-0x73f51a73c9d0: cascata_tanacizinho/cascata_admin@172.19.0.5:5432 got packet 'E' from server when not linked
+cascata-pgbouncer       | 2026-05-17 19:33:28.246 UTC [1] LOG S-0x73f51a73c9d0: cascata_tanacizinho/cascata_admin@172.19.0.5:5432 closing because: SV_USED server got dirty (age=98s)
+cascata-pgbouncer       | 2026-05-17 19:33:28.246 UTC [1] LOG S-0x73f51a73c6e8: cascata_tanacizinho/cascata_admin@172.19.0.5:5432 closing because: SV_IDLE server got dirty (age=78s)
+cascata-pgbouncer       | 2026-05-17 19:33:28.424 UTC [1] LOG S-0x73f51a73c6e8: cascata_tanacizinho/cascata_admin@172.19.0.5:5432 new connection to server (from 172.19.0.6:57090)
+cascata-pgbouncer       | 2026-05-17 19:33:31.916 UTC [1] LOG stats: 1 xacts/s, 2 queries/s, 0 client parses/s, 0 server parses/s, 0 binds/s, in 494 B/s, out 506 B/s, xact 4583 us, query 3097 us, wait 427 us
+cascata-backend-data    | 2026/05/17 19:33:30 [Realtime] 🟢 Started LISTEN for tanacizinho:live
+cascata-backend-data    | 2026/05/17 19:33:31 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:31 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:33:31 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:31 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:33:31 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-data    | 2026/05/17 19:33:31 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-engine  | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:30 [8bcaa5340b75/NiRpxIPUxQ-000094] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables/tab1testemain/columns?schema=public HTTP/1.1" from 172.64.222.47 - 200 739B in 37.596548ms
+cascata-backend-engine  | 2026/05/17 19:33:31 [ProjectResolver-LAZY] POST /api/data/tanacizinho/query?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:31 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:31 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:31 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/query, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend-engine  | 2026/05/17 19:33:31 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-engine  | 2026/05/17 19:33:31 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-engine  | 2026/05/17 19:33:31 [RunRawQuery] Auth Debug - Project: tanacizinho, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend-engine  | 2026/05/17 19:33:31 [RunRawQuery] ACCESS GRANTED for project tanacizinho
+cascata-backend-engine  | 2026/05/17 19:33:31 [SECURITY_EVENT] type=ADMIN_SQL_QUERY project=tanacizinho table=raw_query column= severity=info | map[cron_count:0 params_count:0 regular_count:1 source:dashboard_sql_editor sql_length:57 sql_preview:SELECT count(*)::int as total FROM public."tab1testemain" statement_count:1]
+cascata-backend-engine  | 2026/05/17 19:33:31 [8bcaa5340b75/NiRpxIPUxQ-000095] "POST http://dash.unibloom.com.br/api/data/tanacizinho/query?schema=public HTTP/1.1" from 172.64.222.47 - 200 36B in 20.211961ms
+cascata-backend-engine  | 2026/05/17 19:33:32 [Firehose] Flushing 5 audit logs to persistence...
+cascata-backend-engine  | 2026/05/17 19:33:36 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:32:44 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:32:44 [23b9ec27294a/Et9OQ1Q44i-000122] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables?schema=public HTTP/1.1" from 172.64.222.46 - 500 29B in 23.38685ms
+cascata-backend         | 2026/05/17 19:32:44 [ProjectResolver-LAZY] GET /api/data/tanacizinho/recycle-bin?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:44 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:44 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:44 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:32:44 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:32:44 [23b9ec27294a/Et9OQ1Q44i-000123] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/recycle-bin?schema=public HTTP/1.1" from 172.64.222.46 - 200 3B in 28.24238ms
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/control/system/settings | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:45 [HostGuard] Project nil - Method: GET, Path: /api/control/system/settings
+cascata-backend         | 2026/05/17 19:32:45 [CascataAuth] Validating token for /api/control/system/settings - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend         | 2026/05/17 19:32:45 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/system/settings, role: service_role
+cascata-backend         | 2026/05/17 19:32:45 [RequireManagementRole] Path: /api/control/system/settings, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:32:45 [RequireManagementRole] ACCESS GRANTED for /api/control/system/settings
+cascata-backend         | 2026/05/17 19:32:45 [23b9ec27294a/Et9OQ1Q44i-000124] "GET http://dash.unibloom.com.br/api/control/system/settings HTTP/1.1" from 172.64.222.47 - 200 33B in 3.246132ms
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:32:45 [23b9ec27294a/Et9OQ1Q44i-000125] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 29.347493ms
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:37 [ProjectResolver-LAZY] GET /api/data/tanacizinho | Host: dash.unibloom.com.br
+cascata-backend-engine  | 2026/05/17 19:33:37 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-engine  | 2026/05/17 19:33:37 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/05/17 19:33:37 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-engine  | 2026/05/17 19:33:37 [ProjectResolver] Branch validation failed for tanacizinho/deploys: no rows in result set
+cascata-backend-engine  | 2026/05/17 19:33:37 [8bcaa5340b75/NiRpxIPUxQ-000096] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/deploys HTTP/1.1" from 172.64.222.47 - 404 19B in 17.079704ms
+cascata-backend-engine  | 2026/05/17 19:33:37 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:32:45 [23b9ec27294a/Et9OQ1Q44i-000126] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/columns?schema=public HTTP/1.1" from 172.64.222.47 - 200 739B in 26.264448ms
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:45 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:45 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:32:45 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:32:45 [23b9ec27294a/Et9OQ1Q44i-000127] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/ui-settings/tab1testemain?schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 22.318448ms
+cascata-backend         | 2026/05/17 19:32:46 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:32:47 [ProjectResolver-LAZY] GET /api/data/tanacizinho/metadata | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:32:47 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:32:47 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/metadata, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:32:47 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/metadata, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:32:47 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:32:47 [23b9ec27294a/Et9OQ1Q44i-000128] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/metadata HTTP/1.1" from 172.64.222.47 - 200 173B in 38.010834ms
+cascata-backend         | 2026/05/17 19:32:47 [Firehose] Flushing 6 audit logs to persistence...
+cascata-backend         | 2026/05/17 19:32:56 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:33:06 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:33:12 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:12 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:12 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:12 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:33:12 [ProjectResolver-LAZY] GET /api/control/projects | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:12 [HostGuard] Project nil - Method: GET, Path: /api/control/projects
+cascata-backend         | 2026/05/17 19:33:12 [CascataAuth] Validating token for /api/control/projects - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend         | 2026/05/17 19:33:12 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects, role: service_role
+cascata-backend         | 2026/05/17 19:33:12 [RequireManagementRole] Path: /api/control/projects, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:33:12 [RequireManagementRole] ACCESS GRANTED for /api/control/projects
+cascata-backend         | 2026/05/17 19:33:12 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:12 [23b9ec27294a/Et9OQ1Q44i-000130] "GET http://dash.unibloom.com.br/api/control/projects HTTP/1.1" from 172.64.222.47 - 200 667B in 5.034521ms
+cascata-backend         | 2026/05/17 19:33:12 [23b9ec27294a/Et9OQ1Q44i-000129] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables?schema=public HTTP/1.1" from 172.64.222.47 - 200 93B in 30.810514ms
+cascata-backend         | 2026/05/17 19:33:12 [ProjectResolver-LAZY] PATCH /api/control/projects/tanacizinho | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:12 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:12 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/control/projects/tanacizinho, Method: PATCH, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:12 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/control/projects/tanacizinho, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:33:12 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend         | 2026/05/17 19:33:12 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:12 [CascataAuth] Validating token for /api/control/projects/tanacizinho - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend-data    | 2026/05/17 19:33:31 [ProjectResolver-LAZY] GET /api/data/tanacizinho/enum-types?schema=public | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:31 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:33:31 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:31 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/enum-types, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:33:31 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend-data    | 2026/05/17 19:33:31 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend-data    | 2026/05/17 19:33:31 [2d011476f51d/YK6NdrouCg-000095] "GET http://dash.unibloom.com.br/api/data/tanacizinho/ui-settings/tab1testemain?schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 35.147239ms
+cascata-backend-data    | 2026/05/17 19:33:31 [RequireManagementRole] Path: /api/data/tanacizinho/enum-types, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend-data    | 2026/05/17 19:33:31 [RequireManagementRole] ACCESS GRANTED for /api/data/tanacizinho/enum-types
+cascata-backend-data    | 2026/05/17 19:33:31 [2d011476f51d/YK6NdrouCg-000096] "GET http://dash.unibloom.com.br/api/data/tanacizinho/enum-types?schema=public HTTP/1.1" from 172.64.222.47 - 200 69B in 45.833628ms
+cascata-backend-data    | 2026/05/17 19:33:32 [ProjectResolver-LAZY] GET /api/data/tanacizinho | Host: dash.unibloom.com.br
+cascata-backend-data    | 2026/05/17 19:33:32 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend-data    | 2026/05/17 19:33:32 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data    | 2026/05/17 19:33:32 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend-data    | 2026/05/17 19:33:32 [ProjectResolver] Branch validation failed for tanacizinho/deploys: no rows in result set
+cascata-backend-data    | 2026/05/17 19:33:32 [2d011476f51d/YK6NdrouCg-000097] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/deploys HTTP/1.1" from 172.64.222.47 - 404 19B in 18.375955ms
+cascata-backend-data    | 2026/05/17 19:33:33 [Firehose] Flushing 6 audit logs to persistence...
+cascata-backend-data    | 2026/05/17 19:33:37 [PoolService] Reaped 1 pools.
+cascata-backend-data    | 2026/05/17 19:33:37 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:33:12 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects/tanacizinho, role: service_role
+cascata-backend         | 2026/05/17 19:33:12 [RequireManagementRole] Path: /api/control/projects/tanacizinho, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:33:12 [RequireManagementRole] ACCESS GRANTED for /api/control/projects/tanacizinho
+cascata-backend         | 2026/05/17 19:33:12 [SchemaCache] Invalidated ALL cached schemas for project tanacizinho (1 keys deleted)
+cascata-backend         | 2026/05/17 19:33:12 [AdminController] Schema cache invalidated for project tanacizinho due to metadata update
+cascata-backend         | 2026/05/17 19:33:12 [SchemaCache] Invalidated all L1 caches and Project Struct for project tanacizinho (from pub/sub)
+cascata-backend         | 2026/05/17 19:33:12 [23b9ec27294a/Et9OQ1Q44i-000131] "PATCH http://dash.unibloom.com.br/api/control/projects/tanacizinho HTTP/1.1" from 172.64.222.46 - 200 16B in 59.633536ms
+cascata-backend         | 2026/05/17 19:33:13 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:13 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:13 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:13 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:33:13 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:13 [23b9ec27294a/Et9OQ1Q44i-000132] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 41.215299ms
+cascata-backend         | 2026/05/17 19:33:16 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:33:17 [Firehose] Flushing 3 audit logs to persistence...
+cascata-backend         | 2026/05/17 19:33:19 [ProjectResolver-LAZY] GET /api/data/tanacizinho/branch/list | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:19 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:19 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:19 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:33:19 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:19 [23b9ec27294a/Et9OQ1Q44i-000133] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/branch/list HTTP/1.1" from 172.64.222.46 - 200 887B in 15.842445ms
+cascata-backend         | 2026/05/17 19:33:22 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend         | 2026/05/17 19:33:26 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend         | 2026/05/17 19:33:27 [ProjectResolver-LAZY] POST /api/data/tanacizinho/branch/deploy | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:27 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:27 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/deploy, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:27 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/deploy, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:33:27 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:27 [INFO] Starting deploy merge [project tanacizinho source branchbobateste target main]
+cascata-backend         | 2026/05/17 19:33:27 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Initializing all managed schemas for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Auth schema initialized for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Tenant table system.ui_settings ensured
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Tenant table system.automations ensured
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Tenant table system.rate_limits ensured
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Tenant table system.api_key_groups ensured
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Tenant table system.api_keys ensured
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Tenant table system.project_extensions ensured
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Security Lock Engine (TIER-3 PADLOCK) injected for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] Public schema permissions initialized for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:27 [DatabaseService] All managed schemas initialized for database: cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:27 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:28 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:28 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:28 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend         | 2026/05/17 19:33:28 [ProjectPool] Isolation Active: Redirecting tanacizinho to branch DB cascata_tanacizinho_branchbobateste_env
+cascata-backend         | [DiffEngine] Phase permissions: generated 24 statements in 19.242824ms
+cascata-backend         | [DiffEngine] Total diff completed in 411.768207ms with 24 statements
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Diff generated [statements 24 phases 7]
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Starting deploy with safety snapshot [project tanacizinho env main statements 24]
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Creating safety snapshot [project tanacizinho env main snapshot tanacizinho_main_backup_1779046408]
+cascata-backend         | 2026/05/17 19:33:28 [Realtime] Notification error for tanacizinho:live: FATAL: terminating connection due to administrator command (SQLSTATE 57P01)
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Snapshot database created [template cascata_tanacizinho_snapshot_34f5fa70 source cascata_tanacizinho]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Snapshot metadata recorded (in-memory only) [project tanacizinho env main snapshot tanacizinho_main_backup_1779046408 template_db cascata_tanacizinho_snapshot_34f5fa70 size_bytes 8700431]
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Safety snapshot created [snapshot tanacizinho_main_backup_1779046408 created_at 2026-05-17 19:33:28.408033618 +0000 UTC m=+3411.885444393]
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Starting deploy [project tanacizinho env main statements 24 dry_run false]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Timeouts configured [lock_timeout 2.5s statement_timeout 30s]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 1 total 24 preview GRANT SELECT ON TABLE public.tab1testemain TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 2 total 24 preview GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.tab1testemain TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 3 total 24 preview GRANT SELECT ON TABLE public.tab2testbrancchone TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 4 total 24 preview GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.tab2testbrancchone TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 5 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v1 TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 6 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v1 TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 7 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v1mc TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 8 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v1mc TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 9 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v3 TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 10 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v3 TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 11 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v4 TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 12 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v4 TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 13 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v5 TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 14 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_generate_v5 TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 15 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_nil TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 16 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_nil TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 17 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_dns TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 18 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_dns TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 19 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_oid TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 20 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_oid TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 21 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_url TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 22 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_url TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 23 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_x500 TO anon;]
+cascata-backend         | 2026/05/17 19:33:28 [DEBUG] Executing statement [index 24 total 24 preview GRANT EXECUTE ON FUNCTION public.uuid_ns_x500 TO authenticated;]
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Deploy completed successfully [project tanacizinho env main statements 24]
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Scheduling snapshot cleanup [snapshot tanacizinho_main_backup_1779046408 retention 24h0m0s template_db cascata_tanacizinho_snapshot_34f5fa70]
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Deploy completed successfully with safety [project tanacizinho env main snapshot tanacizinho_main_backup_1779046408 retention 24h]
+cascata-backend         | 2026/05/17 19:33:28 [INFO] Deploy merge completed successfully [project tanacizinho source branchbobateste target main statements 24]
+cascata-backend         | 2026/05/17 19:33:28 [23b9ec27294a/Et9OQ1Q44i-000134] "POST http://dash.unibloom.com.br/api/data/tanacizinho/branch/branchbobateste/branch/deploy HTTP/1.1" from 172.64.222.47 - 200 4064B in 669.678394ms
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/schemas | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/schemas, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:30 [23b9ec27294a/Et9OQ1Q44i-000135] "GET http://dash.unibloom.com.br/api/data/tanacizinho/schemas HTTP/1.1" from 172.64.222.47 - 200 95B in 58.617963ms
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/recycle-bin?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/recycle-bin, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:30 [23b9ec27294a/Et9OQ1Q44i-000136] "GET http://dash.unibloom.com.br/api/data/tanacizinho/recycle-bin?schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 23.368118ms
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/control/system/settings | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:30 [HostGuard] Project nil - Method: GET, Path: /api/control/system/settings
+cascata-backend         | 2026/05/17 19:33:30 [CascataAuth] Validating token for /api/control/system/settings - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend         | 2026/05/17 19:33:30 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/system/settings, role: service_role
+cascata-backend         | 2026/05/17 19:33:30 [RequireManagementRole] Path: /api/control/system/settings, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend         | 2026/05/17 19:33:30 [RequireManagementRole] ACCESS GRANTED for /api/control/system/settings
+cascata-backend         | 2026/05/17 19:33:30 [23b9ec27294a/Et9OQ1Q44i-000137] "GET http://dash.unibloom.com.br/api/control/system/settings HTTP/1.1" from 172.64.222.47 - 200 33B in 3.066931ms
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/columns, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/ui-settings/tab1testemain, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:30 [23b9ec27294a/Et9OQ1Q44i-000139] "GET http://dash.unibloom.com.br/api/data/tanacizinho/ui-settings/tab1testemain?schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 57.46206ms
+cascata-backend         | 2026/05/17 19:33:30 [23b9ec27294a/Et9OQ1Q44i-000138] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables/tab1testemain/columns?schema=public HTTP/1.1" from 172.64.222.47 - 200 739B in 62.222073ms
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver-LAZY] GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:30 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/tables/tab1testemain/data, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend         | 2026/05/17 19:33:30 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:30 [23b9ec27294a/Et9OQ1Q44i-000140] "GET http://dash.unibloom.com.br/api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" from 172.64.222.47 - 200 3B in 31.169395ms
+cascata-backend         | 2026/05/17 19:33:31 [ProjectResolver-LAZY] GET /api/data/tanacizinho/branch/list | Host: dash.unibloom.com.br
+cascata-backend         | 2026/05/17 19:33:31 [ProjectResolver] Dashboard access detected for project tanacizinho (host: dash.unibloom.com.br)
+cascata-backend         | 2026/05/17 19:33:31 [DomainLocking] Check - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend         | 2026/05/17 19:33:31 [DomainLocking] BYPASSED - Host: dash.unibloom.com.br, Path: /api/data/tanacizinho/branch/list, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: false
+cascata-backend         | 2026/05/17 19:33:31 [ProjectResolver] Cookie-based branch resolved: branchbobateste (Referer: https://dash.unibloom.com.br/)
+cascata-backend         | 2026/05/17 19:33:31 [ProjectResolver] Branch routing active: tanacizinho/branchbobateste → cascata_tanacizinho_branchbobateste_env (Isolation: Shallow Clone)
+cascata-backend         | 2026/05/17 19:33:31 [23b9ec27294a/Et9OQ1Q44i-000141] "GET http://dash.unibloom.com.br/api/data/tanacizinho/branch/list HTTP/1.1" from 172.64.222.47 - 200 887B in 20.356562ms
+cascata-backend         | 2026/05/17 19:33:32 [Firehose] Flushing 7 audit logs to persistence...
+cascata-backend         | 2026/05/17 19:33:36 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:31:46 +0000] "POST /api/control/projects HTTP/1.1" 200 142 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:31:46 +0000] "GET /api/control/projects HTTP/1.1" 200 410 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:31:50 +0000] "GET /api/data/tanacizinho/tables?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:31:50 +0000] "GET /api/data/tanacizinho/recycle-bin?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 104.23.254.47 - - [17/May/2026:19:31:50 +0000] "GET /manifest.json HTTP/1.1" 304 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:31:50 +0000] "GET /api/control/system/settings HTTP/1.1" 200 33 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:31:50 +0000] "GET /api/data/tanacizinho/schemas HTTP/1.1" 200 95 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.69.90.116 - - [17/May/2026:19:31:52 +0000] "GET /service-worker.js?v=cascata-v2 HTTP/1.1" 200 2198 "https://dash.unibloom.com.br/service-worker.js?v=cascata-v2" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:31:53 +0000] "GET /api/data/tanacizinho/enum-types HTTP/1.1" 200 134 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:31:53 +0000] "GET /api/data/tanacizinho/metadata HTTP/1.1" 200 121 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:09 +0000] "POST /api/data/tanacizinho/query?schema=public HTTP/1.1" 200 25 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:09 +0000] "GET /api/control/projects HTTP/1.1" 200 410 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:09 +0000] "GET /api/data/tanacizinho/tables?schema=public HTTP/1.1" 200 45 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:09 +0000] "GET /api/data/tanacizinho/schemas HTTP/1.1" 200 95 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:09 +0000] "GET /api/data/tanacizinho/recycle-bin?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:09 +0000] "PATCH /api/control/projects/tanacizinho HTTP/1.1" 200 16 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:10 +0000] "GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" 200 93 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:10 +0000] "GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:10 +0000] "GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:10 +0000] "GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public HTTP/1.1" 200 739 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:10 +0000] "GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:10 +0000] "GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:10 +0000] "GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public HTTP/1.1" 200 739 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:10 +0000] "GET /api/data/tanacizinho/enum-types?schema=public HTTP/1.1" 200 69 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:10 +0000] "POST /api/data/tanacizinho/query?schema=public HTTP/1.1" 200 36 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:14 +0000] "GET /api/data/tanacizinho/branch/list HTTP/1.1" 200 26 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:41 +0000] "POST /api/data/tanacizinho/branch/create HTTP/1.1" 201 412 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:41 +0000] "GET /api/data/tanacizinho/branch/list HTTP/1.1" 200 778 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:44 +0000] "POST /api/data/tanacizinho/branch/access HTTP/1.1" 200 744 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:44 +0000] "GET / HTTP/1.1" 304 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:44 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables?schema=public HTTP/1.1" 499 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:44 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/schemas HTTP/1.1" 499 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:44 +0000] "GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" 200 106 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:44 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/schemas HTTP/1.1" 200 95 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:44 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables?schema=public HTTP/1.1" 200 45 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:44 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/recycle-bin?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:45 +0000] "GET /api/control/system/settings HTTP/1.1" 200 33 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2 HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" 200 80 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/columns?schema=public HTTP/1.1" 200 739 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/columns?schema=public HTTP/1.1" 200 739 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/ui-settings/tab1testemain?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/ui-settings/tab1testemain?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:45 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/enum-types?schema=public HTTP/1.1" 200 69 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:45 +0000] "POST /api/data/tanacizinho/branch/branchbobateste/query?schema=public HTTP/1.1" 200 36 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:32:47 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/metadata HTTP/1.1" 200 173 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:32:47 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/enum-types HTTP/1.1" 200 134 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.69.90.116 - - [17/May/2026:19:32:47 +0000] "GET /service-worker.js?v=cascata-v2 HTTP/1.1" 200 2198 "https://dash.unibloom.com.br/service-worker.js?v=cascata-v2" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:12 +0000] "POST /api/data/tanacizinho/branch/branchbobateste/query?schema=public HTTP/1.1" 200 25 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:12 +0000] "GET /api/control/projects HTTP/1.1" 200 667 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:12 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables?schema=public HTTP/1.1" 200 93 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:33:12 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/schemas HTTP/1.1" 200 95 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:33:12 +0000] "PATCH /api/control/projects/tanacizinho HTTP/1.1" 200 16 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:12 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/recycle-bin?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:13 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:13 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/ui-settings/tab1testemain?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:33:13 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/tables/tab1testemain/columns?schema=public HTTP/1.1" 200 739 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:13 +0000] "GET / HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "-"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:14 +0000] "PRI * HTTP/2.0" 400 150 "-" "-" "-"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:14 +0000] "GET /favicon.ico HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "-"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:18 +0000] "\x16\x03\x01\x00\xEE\x01\x00\x00\xEA\x03\x03\x0EuY#\xB8\xB8\x95\x90O\x93\xA5\xDF\x09\xCA\xD1^\xD9\xEB3.n\x1Ej\x09c\xA7\xBC\x90\xDD\x08V\x93 \xA5}\xF3\x7F\xDC\xBC`9\xF7AH\xCA\xFC" 400 150 "-" "-" "-"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:33:19 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/branch/list HTTP/1.1" 200 887 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:21 +0000] "GET /wiki HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "-"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:22 +0000] "GET /favicon.ico HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "-"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:22 +0000] "GET /f4blcwajn0m HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "-"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:22 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/branch/list HTTP/1.1" 200 887 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:23 +0000] "GET /favicon.ico HTTP/1.1" 200 2969 "-" "Mozilla/5.0 (compatible; CensysInspect/1.1; +https://about.censys.io/)" "-"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:25 +0000] "GET /api/data/tanacizinho/branch/branchbobateste/branch/diff?source=branchbobateste&target=main HTTP/1.1" 200 6883 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:25 +0000] "\x16\x03\x01\x00\xEE\x01\x00\x00\xEA\x03\x03\xFCF\xC4*m$\xE9\xBC\xA7>\xA9\xCDJH\x0E\x8B>\x9D\xB4\xF0\xD1\x8Eu\xD4E)'=\x0B\xD4Q\xDE \x12c%K\xE8\xBE\x88\x1C\xA7\xC7K\x89\xB1\xB3\xFA\xF8\xDE\xCDn\x129\xB1\x82\x8D\x94~d\xFC\xD6(\x8C|\x00&\xCC\xA8\xCC\xA9\xC0/\xC00\xC0+\xC0,\xC0\x13\xC0\x09\xC0\x14\xC0" 400 150 "-" "-" "-"
+cascata-nginx           | 66.132.172.198 - - [17/May/2026:19:33:27 +0000] "\x16\x03\x01\x00\xEE\x01\x00\x00\xEA\x03\x038W\xED" 400 150 "-" "-" "-"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:28 +0000] "POST /api/data/tanacizinho/branch/branchbobateste/branch/deploy HTTP/1.1" 200 4083 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:29 +0000] "GET / HTTP/1.1" 304 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:33:29 +0000] "GET /api/data/tanacizinho/tables?schema=public HTTP/1.1" 499 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:33:29 +0000] "GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" 200 106 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:33:29 +0000] "GET /api/data/tanacizinho/schemas HTTP/1.1" 499 0 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/tables?schema=public HTTP/1.1" 200 93 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/schemas HTTP/1.1" 200 95 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/recycle-bin?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/control/system/settings HTTP/1.1" 200 33 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.46 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/ai/history/2618bd17-c056-4310-a730-150d3a9a78a2 HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/realtime?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzkwODYzODMsImlhdCI6MTc3OTA0MzE4Mywicm9sZSI6ImFkbWluIiwic3ViIjoiNzQyY2ZmMTEtZmI0MS00NmU5LTk5MjAtMjBjNTBkMDA4YTYxIn0.kHzWiVb1ChhSQAd1VS_UNFJch_LMyDv5ypR7Bu1dq5g&env=live HTTP/1.1" 200 80 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public HTTP/1.1" 200 739 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/tables/tab1testemain/data?limit=100&offset=0&schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:30 +0000] "GET /api/data/tanacizinho/tables/tab1testemain/columns?schema=public HTTP/1.1" 200 739 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:31 +0000] "GET /api/data/tanacizinho/ui-settings/tab1testemain?schema=public HTTP/1.1" 200 3 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:31 +0000] "GET /api/data/tanacizinho/enum-types?schema=public HTTP/1.1" 200 69 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:31 +0000] "POST /api/data/tanacizinho/query?schema=public HTTP/1.1" 200 36 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:31 +0000] "GET /api/data/tanacizinho/branch/list HTTP/1.1" 200 887 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:32 +0000] "GET /api/data/tanacizinho/branch/deploys HTTP/1.1" 404 19 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.69.90.116 - - [17/May/2026:19:33:32 +0000] "GET /service-worker.js?v=cascata-v2 HTTP/1.1" 200 2198 "https://dash.unibloom.com.br/service-worker.js?v=cascata-v2" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+cascata-nginx           | 172.64.222.47 - - [17/May/2026:19:33:37 +0000] "GET /api/data/tanacizinho/branch/deploys HTTP/1.1" 404 19 "https://dash.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:67df:7176:3fba:8098:b9a1"
+ubuntu@ip-172-26-3-236:~/cascata$ 

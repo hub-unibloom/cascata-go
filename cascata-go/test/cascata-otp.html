@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OTP Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #252535;
+    --accent: #00ff9d;
+    --accent2: #7c4dff;
+    --accent3: #ff4d6d;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+    --danger: #ff4d6d;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Azeret Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,157,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 0 20px rgba(0,255,157,0.25);
+  }
+
+  .logo-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .btn-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: 'Azeret Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .btn-add:hover {
+    box-shadow: 0 0 24px rgba(0,255,157,0.5);
+    transform: translateY(-1px);
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+  .empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--text); }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  /* CARD */
+  .cards { display: flex; flex-direction: column; gap: 12px; }
+
+  .otp-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    animation: slideIn 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .otp-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0.6;
+  }
+
+  .otp-card:hover {
+    border-color: rgba(0,255,157,0.3);
+    box-shadow: 0 4px 24px rgba(0,255,157,0.08);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-left {}
+
+  .card-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2px;
+  }
+
+  .card-issuer {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .otp-code {
+    font-family: 'Space Mono', monospace;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+
+  .otp-code:hover { text-shadow: 0 0 20px rgba(0,255,157,0.7); }
+
+  .otp-code .sep { color: var(--border); margin: 0 2px; }
+
+  .copy-hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+    transition: color 0.2s;
+  }
+
+  .copy-hint.copied { color: var(--accent); }
+
+  /* PROGRESS RING */
+  .card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ring-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+  }
+
+  .ring-wrap svg { transform: rotate(-90deg); }
+
+  .ring-bg { stroke: var(--border); }
+
+  .ring-fill {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s linear, stroke 0.3s;
+  }
+
+  .ring-fill.danger { stroke: var(--danger); }
+
+  .ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-icon.del:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 440px;
+    margin: 20px;
+    animation: modalIn 0.25s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal h2 {
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  .modal h2 span { color: var(--accent); }
+
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Azeret Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field select option { background: var(--card); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .field .hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .btn-cancel {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'Azeret Mono', monospace;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-save {
+    flex: 2;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'Azeret Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-save:hover { box-shadow: 0 0 24px rgba(0,255,157,0.4); }
+
+  .error-msg {
+    font-size: 11px;
+    color: var(--danger);
+    margin-top: 4px;
+    display: none;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(.175,.885,.32,1.275);
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Secret display in card (masked) */
+  .secret-display {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  /* Confirm dialog */
+  .confirm-modal {
+    background: var(--card);
+    border: 1px solid var(--danger);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 360px;
+    margin: 20px;
+    text-align: center;
+    animation: modalIn 0.2s ease;
+  }
+
+  .confirm-modal .icon { font-size: 32px; margin-bottom: 12px; }
+  .confirm-modal h3 { font-size: 16px; margin-bottom: 8px; }
+  .confirm-modal p { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+
+  .confirm-actions { display: flex; gap: 10px; }
+
+  .btn-danger {
+    flex: 1;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'Azeret Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🔐</div>
+      <div>
+        <div class="logo-text">OTP <span>Vault</span></div>
+      </div>
+    </div>
+    <button class="btn-add" onclick="openModal()">
+      + Adicionar
+    </button>
+  </header>
+
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span id="statusText">Offline · localStorage · TOTP RFC 6238</span>
+  </div>
+
+  <div id="cardsList" class="cards"></div>
+  <div id="emptyState" class="empty-state" style="display:none">
+    <div class="icon">🗄️</div>
+    <h3>Nenhum segredo cadastrado</h3>
+    <p>Clique em <strong>+ Adicionar</strong> para cadastrar seu primeiro segredo TOTP.<br>
+    Use a mesma chave que você colocaria no Google/Microsoft Authenticator.</p>
+  </div>
+</div>
+
+<!-- Modal Adicionar -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>Novo <span>Segredo TOTP</span></h2>
+
+    <div class="field">
+      <label>Nome / Label</label>
+      <input type="text" id="inpLabel" placeholder="ex: Cascata Admin" autocomplete="off">
+      <div class="error-msg" id="errLabel">Nome obrigatório</div>
+    </div>
+
+    <div class="field">
+      <label>Issuer (opcional)</label>
+      <input type="text" id="inpIssuer" placeholder="ex: Cascata, GitHub, AWS" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label>Segredo (Base32)</label>
+      <input type="text" id="inpSecret" placeholder="JBSWY3DPEHPK3PXP" autocomplete="off" style="letter-spacing:0.08em">
+      <div class="hint">Chave fornecida pelo serviço — a mesma que você escanearia via QR code. Espaços são removidos automaticamente.</div>
+      <div class="error-msg" id="errSecret">Segredo inválido (Base32 esperado)</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Período (s)</label>
+        <select id="inpPeriod">
+          <option value="30" selected>30s</option>
+          <option value="60">60s</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Dígitos</label>
+        <select id="inpDigits">
+          <option value="6" selected>6</option>
+          <option value="8">8</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveEntry()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete overlay -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="confirm-modal">
+    <div class="icon">⚠️</div>
+    <h3>Remover entrada?</h3>
+    <p id="confirmMsg">Esta ação não pode ser desfeita.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmDelete()">Remover</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── TOTP ENGINE (RFC 6238 / HOTP RFC 4226) ────────────────────────────────
+
+const B32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+function base32Decode(s) {
+  s = s.toUpperCase().replace(/\s/g, '').replace(/=/g, '');
+  let bits = 0, value = 0;
+  const out = [];
+  for (const c of s) {
+    const idx = B32_CHARS.indexOf(c);
+    if (idx < 0) throw new Error('invalid base32 char: ' + c);
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) {
+      out.push((value >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+  return new Uint8Array(out);
+}
+
+function isValidBase32(s) {
+  try { base32Decode(s); return s.replace(/\s/g,'').length >= 8; }
+  catch { return false; }
+}
+
+async function hmacSHA1(keyBytes, msgBytes) {
+  const key = await crypto.subtle.importKey('raw', keyBytes, { name:'HMAC', hash:'SHA-1' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, msgBytes);
+  return new Uint8Array(sig);
+}
+
+function bigIntToBytes8(n) {
+  const b = new Uint8Array(8);
+  let tmp = BigInt(n);
+  for (let i = 7; i >= 0; i--) {
+    b[i] = Number(tmp & 0xffn);
+    tmp >>= 8n;
+  }
+  return b;
+}
+
+async function computeTOTP(secretB32, period = 30, digits = 6) {
+  const key = base32Decode(secretB32);
+  const counter = Math.floor(Date.now() / 1000 / period);
+  const msg = bigIntToBytes8(counter);
+  const hash = await hmacSHA1(key, msg);
+  const offset = hash[hash.length - 1] & 0x0f;
+  const code = ((hash[offset] & 0x7f) << 24)
+             | (hash[offset+1] << 16)
+             | (hash[offset+2] << 8)
+             |  hash[offset+3];
+  return String(code % Math.pow(10, digits)).padStart(digits, '0');
+}
+
+function getTimeLeft(period = 30) {
+  const now = Math.floor(Date.now() / 1000);
+  return period - (now % period);
+}
+
+// ─── STORAGE ────────────────────────────────────────────────────────────────
+
+const STORE_KEY = 'otp_vault_v1';
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveEntries(list) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(list));
+}
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+
+let entries = loadEntries();
+let tickTimer = null;
+let deleteTarget = null;
+
+// ─── RENDER ─────────────────────────────────────────────────────────────────
+
+const cardsList = document.getElementById('cardsList');
+const emptyState = document.getElementById('emptyState');
+
+function renderAll() {
+  cardsList.innerHTML = '';
+  if (entries.length === 0) {
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+  for (const e of entries) {
+    cardsList.appendChild(buildCard(e));
+  }
+}
+
+function buildCard(entry) {
+  const div = document.createElement('div');
+  div.className = 'otp-card';
+  div.id = 'card-' + entry.id;
+
+  const circumference = 2 * Math.PI * 22;
+
+  div.innerHTML = `
+    <div class="card-left">
+      <div class="card-label">${escHtml(entry.issuer || 'TOTP')}</div>
+      <div class="card-issuer">${escHtml(entry.label)}</div>
+      <div class="otp-code" id="code-${entry.id}" onclick="copyCode('${entry.id}')">
+        ······
+      </div>
+      <div class="copy-hint" id="hint-${entry.id}">clique para copiar</div>
+    </div>
+    <div class="card-right">
+      <div class="ring-wrap">
+        <svg width="52" height="52" viewBox="0 0 52 52">
+          <circle class="ring-bg" cx="26" cy="26" r="22" fill="none" stroke-width="3"/>
+          <circle class="ring-fill" id="ring-${entry.id}" cx="26" cy="26" r="22" fill="none"
+            stroke-width="3"
+            stroke-dasharray="${circumference}"
+            stroke-dashoffset="${circumference}"/>
+        </svg>
+        <div class="ring-text" id="rtext-${entry.id}">--</div>
+      </div>
+      <div class="card-actions">
+        <button class="btn-icon del" title="Remover" onclick="askDelete('${entry.id}')">🗑</button>
+      </div>
+    </div>
+  `;
+  return div;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── TICK ────────────────────────────────────────────────────────────────────
+
+async function tick() {
+  const circumference = 2 * Math.PI * 22;
+  for (const e of entries) {
+    const left = getTimeLeft(e.period);
+    const pct = left / e.period;
+
+    const codeEl = document.getElementById('code-' + e.id);
+    const ringEl = document.getElementById('ring-' + e.id);
+    const rtextEl = document.getElementById('rtext-' + e.id);
+
+    if (!codeEl) continue;
+
+    // Regenerate code at boundary
+    if (left === e.period || !codeEl.dataset.lastCode) {
+      try {
+        const raw = await computeTOTP(e.secret, e.period, e.digits);
+        const half = e.digits / 2;
+        codeEl.innerHTML = raw.slice(0, half) + '<span class="sep"> </span>' + raw.slice(half);
+        codeEl.dataset.lastCode = raw;
+      } catch (err) {
+        codeEl.textContent = 'ERRO';
+      }
+    }
+
+    // Ring
+    if (ringEl) {
+      const offset = circumference * (1 - pct);
+      ringEl.style.strokeDashoffset = offset;
+      if (left <= 5) {
+        ringEl.classList.add('danger');
+        rtextEl.style.color = 'var(--danger)';
+      } else {
+        ringEl.classList.remove('danger');
+        rtextEl.style.color = 'var(--accent)';
+      }
+    }
+    if (rtextEl) rtextEl.textContent = left;
+  }
+}
+
+function startTick() {
+  if (tickTimer) clearInterval(tickTimer);
+  tick();
+  tickTimer = setInterval(tick, 1000);
+}
+
+// ─── COPY ────────────────────────────────────────────────────────────────────
+
+async function copyCode(id) {
+  const entry = entries.find(e => e.id === id);
+  if (!entry) return;
+  const raw = document.getElementById('code-' + id)?.dataset?.lastCode;
+  if (!raw) return;
+  try {
+    await navigator.clipboard.writeText(raw);
+    const hint = document.getElementById('hint-' + id);
+    hint.textContent = '✓ copiado!';
+    hint.classList.add('copied');
+    setTimeout(() => { hint.textContent = 'clique para copiar'; hint.classList.remove('copied'); }, 2000);
+  } catch {
+    showToast('Erro ao copiar');
+  }
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+
+function openModal() {
+  document.getElementById('inpLabel').value = '';
+  document.getElementById('inpIssuer').value = '';
+  document.getElementById('inpSecret').value = '';
+  document.getElementById('inpPeriod').value = '30';
+  document.getElementById('inpDigits').value = '6';
+  document.getElementById('errLabel').style.display = 'none';
+  document.getElementById('errSecret').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('inpLabel').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function saveEntry() {
+  const label = document.getElementById('inpLabel').value.trim();
+  const issuer = document.getElementById('inpIssuer').value.trim();
+  const secret = document.getElementById('inpSecret').value.trim().replace(/\s/g,'').toUpperCase();
+  const period = parseInt(document.getElementById('inpPeriod').value);
+  const digits = parseInt(document.getElementById('inpDigits').value);
+
+  let ok = true;
+
+  if (!label) {
+    document.getElementById('errLabel').style.display = 'block';
+    ok = false;
+  } else {
+    document.getElementById('errLabel').style.display = 'none';
+  }
+
+  if (!isValidBase32(secret)) {
+    document.getElementById('errSecret').style.display = 'block';
+    ok = false;
+  } else {
+    document.getElementById('errSecret').style.display = 'none';
+  }
+
+  if (!ok) return;
+
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    label, issuer, secret, period, digits,
+    createdAt: Date.now()
+  };
+
+  entries.push(entry);
+  saveEntries(entries);
+  renderAll();
+  startTick();
+  closeModal();
+  showToast('Segredo adicionado ✓');
+}
+
+// ─── DELETE ──────────────────────────────────────────────────────────────────
+
+function askDelete(id) {
+  deleteTarget = id;
+  const e = entries.find(x => x.id === id);
+  document.getElementById('confirmMsg').textContent =
+    `Remover "${e?.label || id}"? Esta ação não pode ser desfeita.`;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  deleteTarget = null;
+}
+
+function confirmDelete() {
+  if (!deleteTarget) return;
+  entries = entries.filter(e => e.id !== deleteTarget);
+  saveEntries(entries);
+  renderAll();
+  startTick();
+  closeConfirm();
+  showToast('Entrada removida');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── KEYBOARD ────────────────────────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeModal();
+    closeConfirm();
+  }
+});
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmOverlay')) closeConfirm();
+});
+
+// Auto uppercase + strip spaces no campo secret
+document.getElementById('inpSecret').addEventListener('input', function() {
+  const pos = this.selectionStart;
+  this.value = this.value.toUpperCase();
+  this.setSelectionRange(pos, pos);
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+renderAll();
+startTick();
+
+// Status
+document.getElementById('statusText').textContent =
+  `Offline · ${entries.length} entrada${entries.length !== 1 ? 's' : ''} · RFC 6238`;
+</script>
+</body>
+</html>

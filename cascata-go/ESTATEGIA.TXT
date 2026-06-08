@@ -1,0 +1,141 @@
+# Investigação de Gaps no Sistema de Edge Functions
+
+Investigação completa dos gaps que impedem o sistema de edge functions de funcionar corretamente, identificando problemas de roteamento, endpoints e integração entre frontend e backend.
+
+## Gaps Identificados
+
+### GAP #1: Endpoint Incorreto para Listagem (CRÍTICO)
+**Problema**: O usuário está chamando `/api/data/teste/functions` para listar edge functions, mas este endpoint lista RPCs nativas do PostgreSQL, não edge functions.
+
+**Detalhes**:
+- Endpoint atual sendo usado: `/api/data/teste/functions` → Controller: `dataCtrl.ListFunctions`
+- Endpoint correto: `/api/data/teste/edge/functions` → Controller: `edgeCtrl.ListFunctions`
+- `dataCtrl.ListFunctions` consulta `pg_proc` (funções nativas PostgreSQL)
+- `edgeCtrl.ListFunctions` consulta `system.edge_functions` (tabela de edge functions)
+
+**Impacto**: O usuário recebe array vazio `[]` porque não há edge functions sendo listadas no endpoint errado.
+
+**Localização**:
+- Backend: `backend/internal/controllers/data.go` linha 2470
+- Backend: `backend/internal/controllers/edge.go` linha 26
+- Backend: `backend/cmd/server/main.go` linha 451 (endpoint correto)
+
+---
+
+### GAP #2: Frontend Não Usa Endpoint de Deploy (CRÍTICO)
+**Problema**: O frontend salva edge functions via `/api/data/{projectId}/assets` (POST), mas o backend espera `/api/data/{projectId}/edge/deploy` (POST).
+
+**Detalhes**:
+- Frontend (`RPCManager.tsx` linha 408): Usa `fetchWithAuth(/api/data/${projectId}/assets, POST)` para salvar edge functions
+- Backend (`main.go` linha 452): Endpoint de deploy é `/api/data/{slug}/edge/deploy` → Controller: `edgeCtrl.DeployFunction`
+- `edgeCtrl.DeployFunction` insere na tabela `system.edge_functions` com criptografia
+- `dataCtrl.UpsertAsset` insere na tabela `system.project_assets` (não é a tabela correta para edge functions)
+
+**Impacto**: Edge functions salvas via frontend vão para a tabela errada (`system.project_assets` em vez de `system.edge_functions`), então nunca aparecem na listagem correta.
+
+**Localização**:
+- Frontend: `frontend/pages/RPCManager.tsx` linha 408-426 (`handleSaveObject`)
+- Backend: `backend/internal/controllers/edge.go` linha 114 (`DeployFunction`)
+- Backend: `backend/internal/controllers/data.go` linha 1663 (`UpsertAsset`)
+- Backend: `backend/cmd/server/main.go` linha 452
+
+---
+
+### GAP #3: Roteamento Nginx Correto (SEM GAP)
+**Status**: ✅ Funcionando corretamente
+
+**Detalhes**:
+- Nginx roteia `/edge/.*` para `backend_data_sockets` (linha 112)
+- Isso inclui `/api/data/{slug}/edge/functions` e `/api/data/{slug}/edge/deploy`
+- O roteamento está correto, não há gap aqui.
+
+**Localização**:
+- Nginx: `nginx/nginx.conf.txt` linha 112
+
+---
+
+### GAP #4: Migration e Tabela Criadas (SEM GAP)
+**Status**: ✅ Funcionando corretamente
+
+**Detalhes**:
+- Migration 066 aplicada com sucesso (id 69)
+- Tabela `system.edge_functions` existe com estrutura correta
+- RLS habilitado com políticas apropriadas
+- Índices criados para performance
+
+**Localização**:
+- Migration: `backend/migrations/066_edge_functions.sql`
+
+---
+
+### GAP #5: Execução de Edge Functions (POTENCIAL GAP)
+**Problema**: O frontend executa edge functions via `/api/data/${projectId}/edge/${selectedAsset.name}` (POST), mas se a função não foi salva na tabela correta (`system.edge_functions`), a execução falha.
+
+**Detalhes**:
+- Frontend (`RPCManager.tsx` linha 518): Usa `/api/data/${projectId}/edge/${selectedAsset.name}` para executar
+- Backend (`edge.go` linha 62): `InvokeFunction` consulta `system.edge_functions` pelo nome
+- Se a função foi salva via `/assets` (tabela errada), `InvokeFunction` retorna 404 "Function not found"
+
+**Impacto**: Mesmo que o usuário crie uma edge function via frontend, ela não pode ser executada porque está na tabela errada.
+
+**Localização**:
+- Frontend: `frontend/pages/RPCManager.tsx` linha 518
+- Backend: `backend/internal/controllers/edge.go` linha 62
+
+---
+
+## Resumo do Fluxo Quebrado
+
+### Fluxo Atual (QUEBRADO):
+1. Usuário cria edge function no frontend
+2. Frontend chama `POST /api/data/teste/assets` (ERRADO)
+3. Backend salva em `system.project_assets` (TABELA ERRADA)
+4. Usuário chama `GET /api/data/teste/functions` (ERRADO)
+5. Backend lista RPCs nativas PostgreSQL (NÃO edge functions, mas cuidado, queremos temos todos a funionar.)
+6. Resultado: Array vazio `[]`
+
+### Fluxo Correto (DEVERIA SER):
+1. Usuário cria edge function no frontend
+2. Frontend chama `POST /api/data/teste/edge/deploy` (CORRETO)
+3. Backend salva em `system.edge_functions` com criptografia (TABELA CORRETA)
+4. Usuário chama `GET /api/data/teste/edge/functions` (CORRETO)
+5. Backend lista edge functions de `system.edge_functions`
+6. Resultado: Lista de edge functions criadas
+
+---
+
+## Soluções Propostas
+
+### Solução #1: Corrigir Frontend para Usar Endpoint de Deploy
+**Arquivo**: `frontend/pages/RPCManager.tsx`
+**Alteração**: Modificar `handleSaveObject` para detectar quando `type === 'edge_function'` e chamar `/api/data/${projectId}/edge/deploy` em vez de `/api/data/${projectId}/assets`.
+
+**Payload esperado pelo backend**:
+```json
+{
+  "name": "function_name",
+  "content": "javascript code here"
+}
+```
+
+### Solução #2: Adicionar Endpoint de Listagem no Menu do Frontend
+**Arquivo**: `frontend/pages/RPCManager.tsx`
+**Alteração**: Adicionar botão ou aba específica para listar edge functions via `/api/data/${projectId}/edge/functions`.
+
+### Solução #3: Documentação para Usuário
+**Ação**: Informar o usuário sobre o endpoint correto para listagem:
+- Use `/api/data/teste/edge/functions` para listar edge functions
+- Use `/api/data/teste/edge/deploy` para criar/deploy edge functions
+
+---
+
+## Próximos Passos
+I.A
+1. Implementar ambas as soluções
+
+
+3. Testar o fluxo completo:
+   - Criar edge function via endpoint correto
+   - Listar edge functions via endpoint correto
+   - Executar edge function
+   - Verificar se tudo funciona como esperado

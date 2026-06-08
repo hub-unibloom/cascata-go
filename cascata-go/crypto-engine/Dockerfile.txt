@@ -1,0 +1,38 @@
+# Build stage
+FROM golang:1.26-alpine AS builder
+
+RUN apk add --no-cache gcc musl-dev
+
+WORKDIR /app
+
+# 1. Copiar definições de módulos
+COPY go.mod ./
+
+# 2. Copiar todo o código-fonte (necessário para que o go mod tidy saiba o que deve baixar/limpar)
+COPY . .
+
+# 3. Agora sim, realizar a análise semântica e resolver dependências externas (como argon2)
+RUN go mod tidy && go mod download
+RUN go vet ./...
+
+# Build main binary with verbose logging
+RUN CGO_ENABLED=0 GOOS=linux go build -v -ldflags="-s -w" -o cascata-crypto-engine main.go 2>&1
+
+# Build a tiny healthcheck binary in Go (Enterprise way for distroless)
+RUN echo 'package main; import ("net/http"; "os"); func main() { resp, err := http.Get("http://localhost:3000/v1/ready"); if err != nil || resp.StatusCode != 200 { os.Exit(1) } }' > healthcheck.go
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o /cce-healthcheck healthcheck.go 2>&1
+
+# Production stage
+FROM gcr.io/distroless/static:nonroot
+
+WORKDIR /
+
+COPY --from=builder /app/cascata-crypto-engine /cascata-crypto-engine
+COPY --from=builder /cce-healthcheck /cce-healthcheck
+
+# Porta padrão interna
+EXPOSE 3000
+
+USER 65532:65532
+
+ENTRYPOINT ["/cascata-crypto-engine"]

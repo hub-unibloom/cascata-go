@@ -1,0 +1,87 @@
+Excelente pergunta! Vou analisar profundamente o fluxo "Sovereign Elite" para garantir que não quebrei a segurança máxima:
+
+Vou analisar profundamente o fluxo "Sovereign Elite" no install.sh para garantir que não quebrei a segurança máxima:
+
+
+
+
+
+## ✅ ANÁLISE COMPLETA - SUA SOLUÇÃO ESTÁ CORRETA!
+
+Após estudar profundamente o [install.sh.txt](cci:7://file:///home/cocorico/Documentos/proejetos/cascata%20go/install.sh.txt:0:0-0:0), posso confirmar: **minha solução de auto-unseal é compatível com ambos os modos** e respeita a soberania digital do modo Elite.
+
+### 🔍 O QUE ACONTECE EM CADA MODO:
+
+**MODO 1 - Standard (Conveniência):**
+```
+.env contém: CASCATA_MASTER_SECRET=abc123...
+```
+✅ **Auto-unseal funciona** - o backend encontra a variável e desbloqueia automaticamente
+
+**MODO 2 - Sovereign Elite (Segurança Máxima):**
+```
+.env NÃO contém CASCATA_MASTER_SECRET (é removida na linha 898)
+```
+✅ **Auto-unseal detecta ausência** e loga: `"⚠ CASCATA_MASTER_SECRET não encontrada. Crypto Engine requer unseal manual."`
+
+Isso é o comportamento **CORRETO** para o modo Elite! O engine permanece selado até você fazer unseal manual com sua chave guardada offline.
+
+---
+
+### 🛡️ FLUXO SOVEREIGN ELITE (MODO 2):
+
+1. **Após instalação**: O install.sh mostra a Master Secret na tela e você guarda offline
+2. **Primeiro boot**: Engine inicia selado (sem variável no .env)
+3. **Você faz unseal manual**:
+   ```bash
+   curl -X POST http://SEU_IP/api/control/auth/sovereign/unseal \
+     -H "Content-Type: application/json" \
+     -d '{"master_secret":"SUA_CHAVE_SALVA_OFFLINE"}'
+   ```
+4. **Após cada reboot**: Repetir o unseal manual (segurança máxima garantida)
+
+---
+
+### 📋 RESUMO TÉCNICO:
+
+| Aspecto | Modo Standard | Modo Elite |
+|---------|---------------|------------|
+| Master Secret no .env | ✅ Sim | ❌ Não (RAM only) |
+| Auto-unseal no boot | ✅ Funciona | ❌ Ignora (correto) |
+| Requer unseal manual | ❌ Não | ✅ Sim (por design) |
+| Segurança máxima | ⚠️ Média | ✅ Extrema |
+
+---
+
+## 🚀 RECONSTRUÇÃO RECOMENDADA
+
+Execute o rebuild para aplicar as correções:
+
+```bash
+cd cascata
+docker-compose up -d --build backend_data backend_control
+```
+
+**Logs do auto-unseal:**
+```bash
+docker logs cascata-backend-data -f --tail 20 | grep -E "(Cascata:Init|auto-unseal|ENGINE|Master)"
+```
+
+**Se estiver no modo Elite e engine selado**, faça unseal manual:
+```bash
+curl -X POST http://44.197.182.159/api/control/auth/sovereign/unseal \
+  -H "Content-Type: application/json" \
+  -d '{"master_secret":"SUA_MASTER_SECRET_AQUI"}'
+```
+
+---
+
+## ✅ CONCLUSÃO
+
+**Sua solução é PERMANENTE e CORRETA**, não temporária. Ela:
+- ✅ Funciona automaticamente no modo Standard
+- ✅ Respeita o modo Elite (não tenta unseal sem a chave)
+- ✅ Loga status claro em ambos os casos
+- ✅ Mantém a promessa de segurança máxima do modo Sovereign Elite
+
+O modo Elite é para quem quer **zero persistência da Master Secret em disco** - exatamente o que o install.sh prometeu!

@@ -1,0 +1,61 @@
+Os três tipos de MCP do Cascata são fundamentalmente diferentes
+
+
+## MCP WORNER (Global)  (Admin/Owner)
+
+poder total sobre o sistema igual woner no dashboard se o worner acessar via MCP estive ativo em '@SystemSettings.tsx#L571-583'(/home/cocorico/Documentos/proejetos/cascata go/frontend/pages/SystemSettings.tsx linha 571-583)
+
+
+## MCP WORNER TENACY (SEMI-Global) (Tenant-level) (Admin/Owner)
+
+poder total sobre um tenant específico, igual owner no dashboard se o worner acessar via MCP Estive ativo em '@ProjectIntelligence.tsx#L311-328'
+porem ele só geenia o TENACY, não tem acesso ao WORNER GLOBAL nem como o woner global, ele é semi  global, limitao a atuaaa somente como owner dentro do tenant  
+
+
+## MCP Consumer (final user-level)
+
+É um client MCP que o tenant expõe pra aplicações dele
+Quem conecta é o app mobile do usuário final, um agente de IA, um n8n, etc.
+Acesso idêntico ao que o usuário final teria via API REST
+Limitado ao schema do tenant, zero acesso a infra pura é literlmente apens um consumior, como se fose um passageio na uber ou cliente de um restaurante.
+
+
+todos os 3 tipos de MCP são fundamentalmente diferentes porem todos tem limites já exisstentes por rotas existentes e fluxos de autenticação e autorização. 
+---
+
+ulr exemplo: https://dash.minhaAgencia.com.br/*
+┌─────────────────────────────────────────────────────┐
+│                  MCP WORNER (Global)                │
+│ Poder total: criar tenants, infra, RLS, tudo do painel │
+│ Auth: Worner API Key                                │
+│ Escopo: todas as instalações                        │
+└─────────────────────┬───────────────────────────────┘
+                      │url exemplo: https://dash.minhaAgencia.com.br/#/project/tenacy1/*
+          ┌───────────┴──────────────┐
+          │                          │
+┌─────────▼──────────┐    ┌──────────▼──────────┐
+│  MCP WORNER        │    │  MCP WORNER          │
+│  por Tenant A      │    │  por Tenant B        │
+│  (Agente Gestor)   │    │  (Agente Gestor)     │
+│                    │    │                      │
+│ Pode gerir o seu   │    │ Isolado ao tenant B  │
+│ próprio tenant,    │    │ nem sabe que existe  │
+│ criar tabelas,     │    │ outros tenants.      │
+│ funções, RLS       │    │                      │
+└────────┬───────────┘    └──────────────────────┘
+         │
+         │  *exemplo: https://dash.minhaAgencia.com.br/#/project/tenacy1/auth/v1/signup ou se o tenant tiver Custom Domain seria "https://sisteema.unibloom.com.br" essa quesstão de custom domain já existe um Custom Domain nãao tem acesso ao painel, ele é um ominio exclusivo para consumo externo.
+         │
+┌────────▼───────────────────────────────────────┐
+│           MCP CONSUMERS (por Tenant A)         │
+│    Esse aqui é limitao a atuar como usuario final do tenant atuante com bearer token ou Key Group |                                           │
+│  ┌──────────────┐  ┌────────────┐  ┌────────┐ │
+│  │ MCP Clientes │  │ MCP Stock  │  │ MCP    │ │
+│  │ Finais       │  │ Logística  │  │ Vendas │ │
+│  │              │  │            │  │        │ │
+│  │ products     │  │ inventory  │  │ orders │ │
+│  │ orders(read) │  │ suppliers  │  │ quotes │ │
+│  │              │  │ shipments  │  │        │ │
+│  └──────────────┘  └────────────┘  └────────┘ │
+└────────────────────────────────────────────────┘
+aqui se cria os mcp consumers personalizados para cada tenant e pesonaaliza izeno quais MCP's, tabelas, rpcs, views e functions ele pode acessar.   

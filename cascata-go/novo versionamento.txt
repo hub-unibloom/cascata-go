@@ -1,0 +1,250 @@
+# CASCATA GO - FLUXO DE VERSIONAMENTO E INSTALAÇÃO
+# =================================================
+# Documento para garantir funcionamento correto em ambas as VPS
+# Máquina 1: Modo Standard (chave no .env)
+# Máquina 2: Modo Sovereign Elite (chave em RAM)
+
+## RESUMO DAS CORREÇÕES IMPLEMENTADAS
+
+### BUG 1 - Validação Fraca gen_hex_secret() [CORRIGIDO]
+- Problema: Validava apenas 16 chars mínimo, mas crypto-engine exige 64
+- Solução: Alterado `if [ ${#RESULT} -lt 16 ]` para `if [ ${#RESULT} -lt 64 ]`
+- Arquivo: install.sh.txt:662-665
+
+### BUG 2 - State File Pula Phase 2 [CORRIGIDO]
+- Problema: PHASE2_DONE=true fazia skip da geração de secrets
+- Consequência: Após `docker compose down && up`, MASTER_SECRET não estava no .env
+- Solução: Adicionada verificação `|| [ -z "${MASTER_SECRET:-}" ] || [ ${#MASTER_SECRET} -lt 64 ]`
+- Arquivo: install.sh.txt:1984-1992
+
+### BUG 3 - Unseal Sem Header de Auth [CORRIGIDO]
+- Problema: Curl de unseal automático não enviava header X-Crypto-Auth
+- Consequência: Sempre falhava com 401 Unauthorized
+- Solução: Adicionado `-H "X-Crypto-Auth: ${INTERNAL_CTRL_SECRET}"`
+- Arquivo: install.sh.txt:2010-2013
+
+### BUG 4 - Recuperação Pós-Reboot [CORRIGIDO]
+- Problema: Variáveis perdidas após reboot (shell novo)
+- Solução: Adicionada seção de recuperação do .env antes de gerar secrets
+- Arquivo: install.sh.txt:802-820
+
+### BUG 5 - keystore.Unlock() Reverte KEK [CORRIGIDO]
+- Problema: Revertia KEK em qualquer erro, inclusive arquivo inexistente
+- Solução: Distinguir entre IsNotExist vs decryption failed
+- Arquivo: store.go:94-114
+
+### BUG 6 - Validação de MASTER_SECRET Lida [CORRIGIDO]
+- Problema: Aceitava chave inválida do .env sem validar tamanho
+- Solução: Validar `${#MASTER_SECRET} -ge 64` ao ler do .env
+- Arquivo: install.sh.txt:827-839
+
+---
+
+## FLUXO ESPERADO - MÁQUINA 1 (MODO STANDARD)
+
+### Instalação Inicial
+1. Usuário executa `./install.sh`
+2. Escolhe opção 1 (Standard)
+3. Script gera MASTER_SECRET de 64 chars
+4. Script injeta CASCATA_MASTER_SECRET no .env
+5. Script inicia containers
+6. Crypto-engine lê chave do .env via docker-compose
+7. Crypto-engine deriva KEK e descriptografa/cria keystore
+8. Sistema funciona normalmente
+
+### Após Reboot ou `docker compose down && up`
+1. Containers param
+2. Usuário executa `docker compose up -d`
+3. Crypto-engine reinicia
+4. Docker Compose passa CASCATA_MASTER_SECRET do .env
+5. Chave ainda é válida (64 chars)
+6. Crypto-engine deriva KEK e descriptografa keystore existente
+7. Sistema funciona sem intervenção manual
+
+---
+
+## FLUXO ESPERADO - MÁQUINA 2 (MODO SOVEREIGN ELITE)
+
+### Instalação Inicial
+1. Usuário executa `./install.sh`
+2. Escolhe opção 2 (Elite)
+3. Script gera MASTER_SECRET de 64 chars
+4. Script NÃO salva CASCATA_MASTER_SECRET no .env (remove se existir)
+5. Script mostra chave na tela para usuário anotar
+6. Script inicia containers
+7. Crypto-engine inicia sem chave (SEALED mode)
+8. Script faz unseal automático com MASTER_SECRET em memória
+9. Sistema funciona
+
+### Após Reboot ou `docker compose down && up`
+1. Containers param
+2. Crypto-engine reinicia sem chave (SEALED mode)
+3. Usuário precisa inserir chave manualmente:
+   - Via painel web: System Settings > Unseal Engine
+   - Ou via API direta: `curl -X POST -H "X-Crypto-Auth: <secret>" -d '{"master_secret": "<chave>"}' http://localhost/api/control/auth/sovereign/unseal`
+4. Crypto-engine valida chave e descriptografa keystore
+5. Sistema funciona normalmente
+
+---
+
+## COMANDOS PARA TESTAR NAS VPS
+
+### VPS 1 - Modo Standard (Teste Completo)
+```bash
+cd ~/cascata
+
+# 1. Instalação inicial
+./install.sh
+# Escolher opção 1 (Standard)
+
+# 2. Verificar se está funcionando
+docker logs cascata-crypto-engine | grep "KeyStore loaded"
+
+# 3. Simular reboot
+docker compose down
+
+# 4. Subir novamente
+docker compose up -d
+
+# 5. Verificar se ainda funciona
+docker logs cascata-crypto-engine | grep "KeyStore loaded"
+
+# Esperado: Funciona sem intervenção manual
+```
+
+### VPS 2 - Modo Elite (Teste Completo)
+```bash
+cd ~/cascata
+
+# 1. Instalação inicial
+./install.sh
+# Escolher opção 2 (Elite)
+# ANOTAR A MASTER_SECRET MOSTRADA!
+
+# 2. Verificar se está funcionando
+docker logs cascata-crypto-engine | grep "unsealed"
+
+# 3. Simular reboot
+docker compose down
+
+# 4. Subir novamente
+docker compose up -d
+
+# 5. Verificar que está SEALED
+docker logs cascata-crypto-engine | grep "SEALED"
+# Esperado: "KeyStore is SEALED. Awaiting manual unseal."
+
+# 6. Fazer unseal manual (substituir <MASTER_SECRET> pela chave anotada)
+curl -X POST http://localhost/api/control/auth/sovereign/unseal \
+  -H "Content-Type: application/json" \
+  -H "X-Crypto-Auth: $(grep INTERNAL_CTRL_SECRET .env | cut -d= -f2)" \
+  -d '{"master_secret": "<MASTER_SECRET>"}'
+
+# 7. Verificar que desbloqueou
+docker logs cascata-crypto-engine | grep "unsealed"
+# Esperado: "KeyStore loaded and READY"
+```
+
+---
+
+## CHECKLIST DE VALIDAÇÃO
+
+### Antes de criar as VPS
+- [ ] Código atualizado no repositório
+- [ ] Todas as correções aplicadas
+- [ ] Testado localmente com `docker compose up --build`
+
+### VPS 1 - Modo Standard
+- [ ] Instalação completa sem erros
+- [ ] Crypto-engine logs mostram "KeyStore loaded"
+- [ ] docker compose down && up funciona
+- [ ] Após reinício, sistema funciona sem intervenção
+- [ ] Chave no .env tem 64 caracteres: `grep CASCATA_MASTER_SECRET .env | cut -d= -f2 | wc -c`
+
+### VPS 2 - Modo Elite
+- [ ] Instalação completa sem erros
+- [ ] Chave NÃO está no .env: `grep CASCATA_MASTER_SECRET .env` (deve retornar vazio)
+- [ ] Chave foi mostrada na instalação e anotada
+- [ ] Crypto-engine entra em modo SEALED após down/up
+- [ ] Unseal manual funciona com a chave anotada
+- [ ] Sistema funciona após unseal
+
+---
+
+## ARQUITETURA DE SOBERANIA
+
+### Modo Standard
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  install.sh │────▶│    .env     │────▶│   Docker    │
+│ (gera key)  │     │(salva key)  │     │ (passa key) │
+└─────────────┘     └─────────────┘     └──────┬──────┘
+                                                 │
+                                          ┌──────▼──────┐
+                                          │ crypto-engine│
+                                          │  (usa key)   │
+                                          └─────────────┘
+```
+
+### Modo Elite
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│  install.sh │────▶│  .env       │────▶│   Docker    │
+│ (gera key)  │     │(SEM key!)   │     │(SEM key!)   │
+└─────────────┘     └─────────────┘     └──────┬──────┘
+       │                                       │
+       │    ┌──────────────────────────────────┘
+       │    │         (inicía SEALED)
+       ▼    ▼
+┌─────────────────────────────────────────────┐
+│           crypto-engine                     │
+│  ┌───────────────────────────────────────┐  │
+│  │  Após unseal manual:                 │  │
+│  │  - Carrega key na RAM                │  │
+│  │  - Descriptografa keystore           │  │
+│  │  - Funciona até próximo reboot       │  │
+│  └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+---
+
+## CÓDIGOS DE ERRO E SOLUÇÕES
+
+### "MASTER_SECRET must be at least 64 hex characters"
+- **Causa**: Chave gerada com menos de 64 chars
+- **Solução**: Correção aplicada em gen_hex_secret()
+
+### "KEK derivation failed — entering SEALED mode"
+- **Causa**: Chave inválida ou vazia
+- **Comportamento**: Container fica saudável em modo SEALED (esperado para Elite)
+
+### "Unauthorized" no unseal
+- **Causa**: Header X-Crypto-Auth ausente
+- **Solução**: Correção aplicada no curl de unseal automático
+
+### "PHASE2_DONE=true mas MASTER_SECRET não está definida"
+- **Causa**: State file corrompido ou script interrompido
+- **Solução**: Script agora re-executa phase 2 se MASTER_SECRET ausente
+
+---
+
+## RESUMO TÉCNICO DAS MUDANÇAS
+
+### Files Modificados
+1. `install.sh.txt:662-665` - Validação 64 chars em gen_hex_secret()
+2. `install.sh.txt:802-820` - Recuperação de variáveis do .env
+3. `install.sh.txt:827-839` - Validação MASTER_SECRET lida do .env
+4. `install.sh.txt:1984-1992` - Lógica de skip da Phase 2 corrigida
+5. `install.sh.txt:2010-2013` - Header X-Crypto-Auth no unseal
+6. `store.go:94-114` - Lógica de reverter KEK corrigida
+
+### Comportamento Final Esperado
+- **Modo Standard**: Funciona automaticamente após qualquer reboot
+- **Modo Elite**: Requer unseal manual após reboot (segurança máxima)
+- **Ambos**: Containers saudáveis, sistema resiliente
+
+---
+
+Data da análise: 2026-04-06
+Versão do install.sh: 3.0+

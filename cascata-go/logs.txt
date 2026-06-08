@@ -1,0 +1,115 @@
+
+cascata-nginx-controller  | [Controller] Reloading Nginx container: cascata-nginx
+cascata-nginx-controller  | [Controller] Reload success: 
+cascata-nginx             | 2026/05/30 09:41:52 [warn] 47#47: *127 a client request body is buffered to a temporary file /var/cache/nginx/client_temp/0000000003, client: 172.71.238.31, server: cosmos.unibloom.com.br, request: "POST /api/control/projects/tyu/sites/deploy HTTP/1.1", host: "cosmos.unibloom.com.br", referrer: "https://cosmos.unibloom.com.br/"
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: signal 1 (SIGHUP) received from 49, reconfiguring
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: reconfiguring
+cascata-nginx             | 172.71.238.31 - - [30/May/2026:09:41:54 +0000] "POST /api/control/projects/tyu/sites/deploy HTTP/1.1" 200 178 "https://cosmos.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:50dc:aa2e:87d1:8156:475"
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: using the "epoll" event method
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: start worker processes
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: start worker process 55
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: start worker process 56
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 47#47: gracefully shutting down
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 48#48: gracefully shutting down
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 48#48: exiting
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 47#47: exiting
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 48#48: exit
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 47#47: exit
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: signal 17 (SIGCHLD) received from 48
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: worker process 48 exited with code 0
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: signal 29 (SIGIO) received
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: signal 17 (SIGCHLD) received from 47
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: worker process 47 exited with code 0
+cascata-nginx             | 2026/05/30 09:41:54 [notice] 1#1: signal 29 (SIGIO) received
+cascata-nginx             | 172.71.238.30 - - [30/May/2026:09:41:55 +0000] "GET /api/control/projects/tyu/sites HTTP/1.1" 200 251 "https://cosmos.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:50dc:aa2e:87d1:8156:475"
+cascata-nginx             | 2026/05/30 09:42:03 [error] 56#56: *131 directory index of "/cascata/storage/tyu/_sites/testee/" is forbidden, client: 172.69.91.102, server: min.unibloom.com.br, request: "GET / HTTP/1.1", host: "min.unibloom.com.br"
+cascata-nginx             | 172.69.91.102 - - [30/May/2026:09:42:03 +0000] "GET / HTTP/1.1" 403 555 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:50dc:aa2e:87d1:8156:475"
+cascata-nginx             | 172.64.222.238 - - [30/May/2026:09:42:04 +0000] "GET /favicon.ico HTTP/1.1" 404 555 "https://min.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:50dc:aa2e:87d1:8156:475"
+
+cascata-backend           | 2026/05/30 09:41:54 [ProjectResolver-LAZY] POST /api/control/projects/tyu/sites/deploy | Host: cosmos.unibloom.com.br
+cascata-backend           | 2026/05/30 09:41:54 [ProjectResolver] Dashboard access detected for project tyu (host: cosmos.unibloom.com.br)
+cascata-backend           | 2026/05/30 09:41:54 [DomainLocking] Check - Host: cosmos.unibloom.com.br, Path: /api/control/projects/tyu/sites/deploy, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend           | 2026/05/30 09:41:54 [DomainLocking] BYPASSED - Host: cosmos.unibloom.com.br, Path: /api/control/projects/tyu/sites/deploy, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend           | 2026/05/30 09:41:54 [CascataAuth] Validating token for /api/control/projects/tyu/sites/deploy - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend           | 2026/05/30 09:41:54 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects/tyu/sites/deploy, role: service_role
+cascata-backend           | 2026/05/30 09:41:54 [RequireManagementRole] Path: /api/control/projects/tyu/sites/deploy, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend           | 2026/05/30 09:41:54 [RequireManagementRole] ACCESS GRANTED for /api/control/projects/tyu/sites/deploy
+cascata-backend           | 2026/05/30 09:41:54 [RebuildNginx] Generated 0 project configs
+cascata-backend           | 2026/05/30 09:41:54 [RebuildNginx] Processing static site e4a8df1c-f0a4-45fc-8291-dea74854a661 with domain min.unibloom.com.br (ssl_source: *.unibloom.com.br)
+cascata-backend           | 2026/05/30 09:41:54 [RebuildNginx] SUCCESS - Generated config for static site min.unibloom.com.br at /etc/nginx/conf.d/dynamic/20_site_e4a8df1c-f0a4-45fc-8291-dea74854a661.conf
+cascata-backend           | 2026/05/30 09:41:54 [RebuildNginx] Generated 1 static site configs
+cascata-backend           | 2026/05/30 09:41:54 [7667e851b7c3/yvqeAdT9y3-000037] "POST http://cosmos.unibloom.com.br/api/control/projects/tyu/sites/deploy HTTP/1.1" from 172.71.238.31 - 200 178B in 318.139199ms
+cascata-backend           | 2026/05/30 09:41:55 [ProjectResolver-LAZY] GET /api/control/projects/tyu/sites | Host: cosmos.unibloom.com.br
+cascata-backend           | 2026/05/30 09:41:55 [ProjectResolver] Dashboard access detected for project tyu (host: cosmos.unibloom.com.br)
+cascata-backend           | 2026/05/30 09:41:55 [DomainLocking] Check - Host: cosmos.unibloom.com.br, Path: /api/control/projects/tyu/sites, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend           | 2026/05/30 09:41:55 [DomainLocking] BYPASSED - Host: cosmos.unibloom.com.br, Path: /api/control/projects/tyu/sites, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend           | 2026/05/30 09:41:55 [CascataAuth] Validating token for /api/control/projects/tyu/sites - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend           | 2026/05/30 09:41:55 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects/tyu/sites, role: service_role
+cascata-backend           | 2026/05/30 09:41:55 [RequireManagementRole] Path: /api/control/projects/tyu/sites, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend           | 2026/05/30 09:41:55 [RequireManagementRole] ACCESS GRANTED for /api/control/projects/tyu/sites
+cascata-backend           | 2026/05/30 09:41:55 [7667e851b7c3/yvqeAdT9y3-000038] "GET http://cosmos.unibloom.com.br/api/control/projects/tyu/sites HTTP/1.1" from 172.71.238.30 - 200 251B in 17.155211ms
+cascata-backend           | 2026/05/30 09:41:55 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend           | 2026/05/30 09:41:56 [Firehose] Flushing 2 audit logs to persistence...
+cascata-pgbouncer         | 2026-05-30 09:41:50.633 UTC [1] LOG stats: 0 xacts/s, 0 queries/s, 0 client parses/s, 0 server parses/s, 0 binds/s, in 0 B/s, out 0 B/s, xact 0 us, query 0 us, wait 0 us
+cascata-pgbouncer         | 2026-05-30 09:42:29.432 UTC [1] LOG C-0x760ebbec83e0: cascata_tyu/cascata_admin@172.18.0.10:54420 closing because: client close request (age=119s)
+
+
+---
+
+cascata-backend-engine  | 2026/05/30 09:48:56 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-nginx-controller  | [Controller] Reloading Nginx container: cascata-nginx
+cascata-nginx-controller  | [Controller] Reload success: 
+cascata-pgbouncer         | 2026-05-30 09:48:50.634 UTC [1] LOG stats: 0 xacts/s, 0 queries/s, 0 client parses/s, 0 server parses/s, 0 binds/s, in 0 B/s, out 0 B/s, xact 0 us, query 0 us, wait 0 us
+cascata-backend           | 2026/05/30 09:48:25 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend           | 2026/05/30 09:48:35 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend           | 2026/05/30 09:48:37 [ProjectResolver-LAZY] POST /api/control/projects/tyu/sites/deploy | Host: cosmos.unibloom.com.br
+cascata-backend           | 2026/05/30 09:48:37 [ProjectResolver] Dashboard access detected for project tyu (host: cosmos.unibloom.com.br)
+cascata-backend           | 2026/05/30 09:48:37 [DomainLocking] Check - Host: cosmos.unibloom.com.br, Path: /api/control/projects/tyu/sites/deploy, Method: POST, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend           | 2026/05/30 09:48:37 [DomainLocking] BYPASSED - Host: cosmos.unibloom.com.br, Path: /api/control/projects/tyu/sites/deploy, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend           | 2026/05/30 09:48:37 [CascataAuth] Validating token for /api/control/projects/tyu/sites/deploy - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend           | 2026/05/30 09:48:37 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects/tyu/sites/deploy, role: service_role
+cascata-backend           | 2026/05/30 09:48:37 [RequireManagementRole] Path: /api/control/projects/tyu/sites/deploy, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend           | 2026/05/30 09:48:37 [RequireManagementRole] ACCESS GRANTED for /api/control/projects/tyu/sites/deploy
+cascata-backend           | 2026/05/30 09:48:37 [RebuildNginx] Generated 0 project configs
+cascata-backend           | 2026/05/30 09:48:37 [RebuildNginx] Processing static site e4a8df1c-f0a4-45fc-8291-dea74854a661 with domain min.unibloom.com.br (ssl_source: *.unibloom.com.br)
+cascata-backend           | 2026/05/30 09:48:37 [RebuildNginx] SUCCESS - Generated config for static site min.unibloom.com.br at /etc/nginx/conf.d/dynamic/20_site_e4a8df1c-f0a4-45fc-8291-dea74854a661.conf
+cascata-backend           | 2026/05/30 09:48:37 [RebuildNginx] Processing static site 69ab7aac-d512-4271-bd36-0672e340eb16 with domain unii.unibloom.com.br (ssl_source: *.unibloom.com.br)
+cascata-backend           | 2026/05/30 09:48:37 [RebuildNginx] SUCCESS - Generated config for static site unii.unibloom.com.br at /etc/nginx/conf.d/dynamic/20_site_69ab7aac-d512-4271-bd36-0672e340eb16.conf
+cascata-backend           | 2026/05/30 09:48:37 [RebuildNginx] Generated 2 static site configs
+cascata-backend           | 2026/05/30 09:48:37 [7667e851b7c3/yvqeAdT9y3-000045] "POST http://cosmos.unibloom.com.br/api/control/projects/tyu/sites/deploy HTTP/1.1" from 172.71.238.31 - 200 183B in 319.642145ms
+cascata-backend           | 2026/05/30 09:48:38 [ProjectResolver-LAZY] GET /api/control/projects/tyu/sites | Host: cosmos.unibloom.com.br
+cascata-backend           | 2026/05/30 09:48:38 [ProjectResolver] Dashboard access detected for project tyu (host: cosmos.unibloom.com.br)
+cascata-backend           | 2026/05/30 09:48:38 [DomainLocking] Check - Host: cosmos.unibloom.com.br, Path: /api/control/projects/tyu/sites, Method: GET, CustomDomain: , IsDashboardAuth: true, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend           | 2026/05/30 09:48:38 [DomainLocking] BYPASSED - Host: cosmos.unibloom.com.br, Path: /api/control/projects/tyu/sites, IsDashboardAuth: true, isLocalhost: false, isAdminRoute: true
+cascata-backend           | 2026/05/30 09:48:38 [CascataAuth] Validating token for /api/control/projects/tyu/sites - Token preview: eyJhbGciOiJIUzI1NiIs...
+cascata-backend           | 2026/05/30 09:48:38 [CascataAuth] Control Plane GRANTED - Valid admin token for /api/control/projects/tyu/sites, role: service_role
+cascata-backend           | 2026/05/30 09:48:38 [RequireManagementRole] Path: /api/control/projects/tyu/sites, UserRole: service_role, IsSystemRequest: false, IsDashboardAuth: true
+cascata-backend           | 2026/05/30 09:48:38 [RequireManagementRole] ACCESS GRANTED for /api/control/projects/tyu/sites
+cascata-backend           | 2026/05/30 09:48:38 [7667e851b7c3/yvqeAdT9y3-000046] "GET http://cosmos.unibloom.com.br/api/control/projects/tyu/sites HTTP/1.1" from 104.22.10.12 - 200 505B in 26.285809ms
+cascata-backend           | 2026/05/30 09:48:41 [Firehose] Flushing 2 audit logs to persistence...
+cascata-backend           | 2026/05/30 09:48:45 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend           | 2026/05/30 09:48:55 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-nginx             | 2026/05/30 09:48:35 [warn] 55#55: *151 a client request body is buffered to a temporary file /var/cache/nginx/client_temp/0000000004, client: 172.71.238.31, server: cosmos.unibloom.com.br, request: "POST /api/control/projects/tyu/sites/deploy HTTP/1.1", host: "cosmos.unibloom.com.br", referrer: "https://cosmos.unibloom.com.br/"
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: signal 1 (SIGHUP) received from 57, reconfiguring
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: reconfiguring
+cascata-nginx             | 172.71.238.31 - - [30/May/2026:09:48:37 +0000] "POST /api/control/projects/tyu/sites/deploy HTTP/1.1" 200 183 "https://cosmos.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:50dc:aa2e:87d1:8156:475"
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: using the "epoll" event method
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: start worker processes
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: start worker process 63
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: start worker process 64
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 56#56: gracefully shutting down
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 55#55: gracefully shutting down
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 56#56: exiting
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 55#55: exiting
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 56#56: exit
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 55#55: exit
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: signal 17 (SIGCHLD) received from 56
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: worker process 56 exited with code 0
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: signal 29 (SIGIO) received
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: signal 17 (SIGCHLD) received from 55
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: worker process 55 exited with code 0
+cascata-nginx             | 2026/05/30 09:48:37 [notice] 1#1: signal 29 (SIGIO) received
+cascata-nginx             | 104.22.10.12 - - [30/May/2026:09:48:38 +0000] "GET /api/control/projects/tyu/sites HTTP/1.1" 200 505 "https://cosmos.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:50dc:aa2e:87d1:8156:475"
+cascata-nginx             | 172.64.222.95 - - [30/May/2026:09:48:47 +0000] "GET / HTTP/1.1" 403 555 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:50dc:aa2e:87d1:8156:475"
+cascata-nginx             | 2026/05/30 09:48:47 [error] 64#64: *155 directory index of "/cascata/storage/tyu/_sites/unibloom/" is forbidden, client: 172.64.222.95, server: unii.unibloom.com.br, request: "GET / HTTP/1.1", host: "unii.unibloom.com.br"
+cascata-nginx             | 172.64.222.105 - - [30/May/2026:09:48:47 +0000] "GET /favicon.ico HTTP/1.1" 404 555 "https://unii.unibloom.com.br/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "2804:7f3:801b:50dc:aa2e:87d1:8156:475"

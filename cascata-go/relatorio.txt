@@ -1,0 +1,190 @@
+# Plano de Correção: Rate Limits Backend e Frontend
+
+Este plano corrige os problemas graves no sistema de rate limits onde os dados enviados pelo frontend não são salvos corretamente pelo backend.
+
+## Resumo dos Problemas
+
+**Enviado pelo Frontend:**
+- `window_seconds_anon`: 5000, `window_seconds_auth`: 6000
+- `burst_limit_anon`: 0, `burst_limit_auth`: 0
+- `message_anon`: "Crie sua conta", `message_auth`: "Aumente seu plano"
+- `metadata.crud_limits`: objeto com anon/auth
+- `metadata.group_limits`: {}
+- `metadata.time_windows`: array de objetos
+- `metadata.operation_weights`: objeto
+- `metadata.is_cumulative`: objeto por operação
+
+**Salvo pelo Backend:**
+- `window_seconds`: 1 (hardcoded default)
+- `burst_limit_anon`: 5, `burst_limit_auth`: 10 (hardcoded defaults)
+- `message_anon`: null, `message_auth`: null
+- `crud_limits`: null
+- `time_windows`: null
+- `is_cumulative`: false (boolean único)
+- `operation_weights`: valores padrão
+
+## Parte 1: Backend - Database Migration
+
+### 1.1 Adicionar colunas faltantes à tabela `rate_limits`
+
+Criar arquivo `backend/migrations/037_fix_rate_limits_columns.sql`:
+
+```sql
+-- Adiciona colunas para janelas de tempo separadas para anon e auth
+ALTER TABLE system.rate_limits
+ADD COLUMN IF NOT EXISTS window_seconds_anon INTEGER DEFAULT 1,
+ADD COLUMN IF NOT EXISTS window_seconds_auth INTEGER DEFAULT 1;
+
+-- Comentários
+COMMENT ON COLUMN system.rate_limits.window_seconds_anon IS 'Janela de tempo em segundos para usuários anônimos';
+COMMENT ON COLUMN system.rate_limits.window_seconds_auth IS 'Janela de tempo em segundos para usuários autenticados';
+```
+
+## Parte 2: Backend - Controller
+
+### 2.1 Atualizar `CreateRateLimit` em `backend/internal/controllers/security.go`
+
+**Alterações necessárias (linhas 193-237):**
+
+1. Expandir a struct body para incluir todos os campos:
+```go
+var body struct {
+    RoutePattern       string                 `json:"route_pattern"`
+    Method             string                 `json:"method"`
+    WindowSeconds      int                    `json:"window_seconds"`
+    WindowSecondsAnon  int                    `json:"window_seconds_anon"`
+    WindowSecondsAuth  int                    `json:"window_seconds_auth"`
+    RateLimitAnon      int                    `json:"rate_limit_anon"`
+    BurstLimitAnon     int                    `json:"burst_limit_anon"`
+    RateLimitAuth      int                    `json:"rate_limit_auth"`
+    BurstLimitAuth     int                    `json:"burst_limit_auth"`
+    MessageAnon        string                 `json:"message_anon"`
+    MessageAuth        string                 `json:"message_auth"`
+    Metadata           map[string]interface{} `json:"metadata"`
+}
+```
+
+2. Remover lógica de valores hardcoded (linhas 207-216):
+   - Não forçar defaults quando valor é 0
+   - Usar o valor enviado ou um default sensível apenas se realmente não foi enviado
+
+3. Extrair campos do metadata:
+```go
+// Extrair campos do metadata
+crudLimits := body.CrudLimits
+if body.Metadata != nil {
+    if cl, ok := body.Metadata["crud_limits"].(map[string]interface{}); ok {
+        crudLimits = cl
+    }
+}
+
+groupLimits := map[string]interface{}{}
+if body.Metadata != nil {
+    if gl, ok := body.Metadata["group_limits"].(map[string]interface{}); ok {
+        groupLimits = gl
+    }
+}
+
+timeWindows := []interface{}{}
+if body.Metadata != nil {
+    if tw, ok := body.Metadata["time_windows"].([]interface{}); ok {
+        timeWindows = tw
+    }
+}
+
+operationWeights := map[string]interface{}{"read": 1, "create": 5, "update": 2, "delete": 3}
+if body.Metadata != nil {
+    if ow, ok := body.Metadata["operation_weights"].(map[string]interface{}); ok {
+        operationWeights = ow
+    }
+}
+
+// is_cumulative: converter de objeto por operação para boolean global
+// Se qualquer operação for true, considera true
+isCumulative := false
+if body.Metadata != nil {
+    if ic, ok := body.Metadata["is_cumulative"].(map[string]interface{}); ok {
+        for _, v := range ic {
+            if b, ok := v.(bool); ok && b {
+                isCumulative = true
+                break
+            }
+        }
+    }
+}
+```
+
+4. Atualizar INSERT SQL para incluir todas as colunas:
+```sql
+INSERT INTO system.rate_limits (
+    project_slug, route_pattern, method,
+    rate_limit, burst_limit,
+    rate_limit_anon, burst_limit_anon,
+    rate_limit_auth, burst_limit_auth,
+    window_seconds, window_seconds_anon, window_seconds_auth,
+    message_anon, message_auth,
+    crud_limits, group_limits,
+    time_windows, operation_weights, is_cumulative
+)
+VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+)
+ON CONFLICT (project_slug, route_pattern, method)
+DO UPDATE SET
+    rate_limit = EXCLUDED.rate_limit,
+    burst_limit = EXCLUDED.burst_limit,
+    rate_limit_anon = EXCLUDED.rate_limit_anon,
+    burst_limit_anon = EXCLUDED.burst_limit_anon,
+    rate_limit_auth = EXCLUDED.rate_limit_auth,
+    burst_limit_auth = EXCLUDED.burst_limit_auth,
+    window_seconds = EXCLUDED.window_seconds,
+    window_seconds_anon = EXCLUDED.window_seconds_anon,
+    window_seconds_auth = EXCLUDED.window_seconds_auth,
+    message_anon = EXCLUDED.message_anon,
+    message_auth = EXCLUDED.message_auth,
+    crud_limits = EXCLUDED.crud_limits,
+    group_limits = EXCLUDED.group_limits,
+    time_windows = EXCLUDED.time_windows,
+    operation_weights = EXCLUDED.operation_weights,
+    is_cumulative = EXCLUDED.is_cumulative
+```
+
+5. Passar todos os parâmetros para o Exec:
+```go
+services.SystemPool.Exec(r.Context(), sql,
+    ctx.Project.Slug,
+    body.RoutePattern, body.Method,
+    rateAnon, burstAnon,
+    rateAnon, burstAnon,
+    rateAuth, burstAuth,
+    windowSeconds, windowSecondsAnon, windowSecondsAuth,
+    body.MessageAnon, body.MessageAuth,
+    crudLimits, groupLimits,
+    timeWindows, operationWeights, isCumulative)
+```
+
+## Parte 3: Frontend - Correção do Modal
+
+### 3.1 Verificar formato de envio em `RLSManager.tsx`
+
+O frontend atualmente envia dados em formato incorreto. Precisa alinhar com o backend:
+
+**Problema:** Frontend envia `window_seconds_anon` e `window_seconds_auth` separados, mas backend espera `window_seconds` (singular) ou as novas colunas.
+
+**Solução:** Após a migration, o backend aceitará ambos os formatos. O frontend deve continuar enviando `window_seconds_anon` e `window_seconds_auth`.
+
+### 3.2 Corrigir lógica de `is_cumulative`
+
+**Problema:** Frontend envia `is_cumulative` como objeto por operação, mas tabela tem boolean único.
+
+**Solução:** Backend converterá o objeto para boolean (true se qualquer operação for true). Frontend pode continuar enviando no formato atual, ou simplificar para boolean único.
+
+**Opção A (simplificar frontend):**
+```typescript
+// Mudar de objeto para boolean único
+is_cumulative: true  // ou false
+```
+
+**Opção B (manter formato atual):**
+Backend converte objeto para boolean automaticamente (já implementado no plano acima).
+

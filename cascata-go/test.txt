@@ -1,0 +1,1125 @@
+# Relatório Completo do Sistema de Branches - Análise Exata do Código
+
+Este relatório documenta EXATAMENTE como o sistema de branches funciona, baseado APENAS no código lido. Sem suposições ou certezas falsas.
+
+## Resumo Executivo
+
+O sistema atual NÃO implementa isolamento total entre branches. Quando um merge é realizado, ele afeta DIRETAMENTE o banco de destino (geralmente "main"), e outros branches que usam o mesmo banco podem ser afetados. O sistema usa uma arquitetura de "thin clone" para branches de ambiente, mas o merge aplica mudanças no banco compartilhado.
+
+---
+
+## 1. Arquitetura de Dados
+
+### 1.1 Tabelas do Sistema (SystemPool)
+
+#### system.branches
+**Localização**: `backend/migrations/060_branching_system.sql:16-53`
+
+Campos principais:
+- `id`: UUID (PK)
+- `project_slug`: VARCHAR(255) - identifica o projeto
+- `name`: VARCHAR(255) - nome da branch (ex: "main", "feat/novo-checkout")
+- `branch_type`: VARCHAR(50) - "environment" ou "data"
+- `status`: VARCHAR(50) - "active", "merged", "deleted", "expired"
+- `parent_branch`: VARCHAR(255) - branch de origem
+- `is_main`: BOOLEAN - true apenas para "main"
+- `data_branch_db_name`: VARCHAR(255) - nome do banco para data branches
+- `materialized_db`: VARCHAR(255) - nome do banco materializado (NULL se não materializado)
+- `last_accessed_at`: TIMESTAMPTZ - último acesso ao banco materializado
+- `materialization_ttl_hours`: INTEGER - TTL em horas (default: 24)
+- `migrations`: JSONB - array de migrations
+- `functions_sql`: TEXT
+- `triggers_sql`: TEXT
+- `rls_sql`: TEXT
+- `automations_json`: JSONB
+- `auth_config_json`: JSONB
+- `checksum`: VARCHAR(64) - SHA-256 do conteúdo
+
+**Constraints**:
+- UNIQUE(project_slug, name)
+- FOREIGN KEY (project_slug) REFERENCES system.projects(slug) ON DELETE CASCADE
+
+#### system.branch_deploys
+**Localização**: `backend/migrations/060_branching_system.sql:72-96`
+
+Campos principais:
+- `id`: UUID (PK)
+- `branch_id`: UUID - FK para system.branches
+- `source_branch`: VARCHAR(255) - branch de origem
+- `target_branch`: VARCHAR(255) - branch de destino
+- `status`: VARCHAR(50) - "pending", "running", "success", "failed", "rolled_back"
+- `diff_result`: JSONB - resultado do diff
+- `sql_statements`: TEXT[] - SQL statements gerados
+- `triggered_by`: UUID - usuário que disparou
+
+#### system.data_branches
+**Localização**: `backend/migrations/060_branching_system.sql:114-134`
+
+Campos principais:
+- `id`: UUID (PK)
+- `project_slug`: VARCHAR(255)
+- `branch_name`: VARCHAR(255)
+- `db_name`: VARCHAR(255) UNIQUE - nome do banco PostgreSQL
+- `template_db`: VARCHAR(255) - banco usado como template
+- `status`: VARCHAR(50)
+- `expires_at`: TIMESTAMPTZ
+
+---
+
+## 2. Fluxo de Criação de Branch (CreateBranch)
+
+### 2.1 Controller Layer
+**Localização**: `backend/internal/controllers/branch.go:273-315`
+
+```go
+func (c *BranchController) CreateBranch(w http.ResponseWriter, r *http.Request)
+```
+
+**Fluxo EXATO**:
+1. Extrai contexto da request (CascataCtxKey)
+2. Valida que Project existe
+3. Deserializa JSON body para CreateBranchRequest
+4. Extrai user ID do contexto (opcional)
+5. Chama `c.BranchSvc.CreateBranch(ctx, projectSlug, req, createdBy)`
+6. Retorna response com branch criada
+
+### 2.2 Service Layer
+**Localização**: `backend/internal/domain/branching/environment/manager.go:61-203`
+
+```go
+func (s *BranchService) CreateBranch(ctx context.Context, projectSlug string, req CreateBranchRequest, createdBy *string) (*Branch, error)
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Validações Iniciais (linhas 63-76)
+```go
+if req.Name == "main" {
+    return nil, fmt.Errorf("cannot create branch named 'main' - use EnsureMainBranch instead")
+}
+
+if req.BranchType == BranchTypeEnvironment {
+    if _, err := s.EnsureMainBranch(ctx, projectSlug); err != nil {
+        return nil, fmt.Errorf("failed to initialize main branch: %w", err)
+    }
+}
+
+if req.BranchType == BranchTypeData && req.ParentBranch == nil {
+    return nil, fmt.Errorf("data branches require a parent branch")
+}
+```
+
+**O que acontece**:
+- Não permite criar branch com nome "main" (deve usar EnsureMainBranch)
+- Se branch_type for "environment", garante que main existe
+- Se branch_type for "data", exige parent_branch
+
+#### Passo 2: Cálculo de Checksum (linhas 78-82)
+```go
+checksum, err := s.calculateChecksum(req)
+```
+
+Calcula SHA-256 de: migrations, functions_sql, triggers_sql, rls_sql, automations_json, auth_config_json
+
+#### Passo 3: Serialização (linhas 84-102)
+```go
+var migrationsJSONB []byte
+if len(req.Migrations) > 0 {
+    migrationsJSONB, err = json.Marshal(req.Migrations)
+}
+
+var expiresAt *time.Time
+if req.BranchType == BranchTypeData {
+    ttl := 168 // 7 dias padrão
+    if req.DataBranchTTL != nil {
+        ttl = *req.DataBranchTTL
+    }
+    exp := time.Now().Add(time.Duration(ttl) * time.Hour)
+    expiresAt = &exp
+}
+```
+
+#### Passo 4: Geração de Nome de Banco (linhas 104-109)
+```go
+var dataBranchDBName *string
+if req.BranchType == BranchTypeData {
+    dbName := fmt.Sprintf("cascata_%s_%s_data", projectSlug, sanitizeBranchName(req.Name))
+    dataBranchDBName = &dbName
+}
+```
+
+**IMPORTANTE**: Apenas data branches geram nome de banco. Environment branches NÃO geram banco na criação.
+
+#### Passo 5: Inserção no Banco (linhas 111-177)
+```go
+query := `
+    INSERT INTO system.branches (
+        project_slug, name, branch_type, status, parent_branch,
+        created_by, is_main, data_branch_db_name, data_branch_ttl_hours,
+        expires_at, migrations, functions_sql, triggers_sql, rls_sql,
+        automations_json, auth_config_json, checksum
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+    RETURNING id, project_slug, name, branch_type, status, parent_branch,
+        created_at, updated_at, created_by, is_main, data_branch_db_name,
+        data_branch_ttl_hours, expires_at, checksum
+`
+```
+
+**Pool usado**: `s.pool` (SystemPool - configurado no construtor)
+
+**O que é salvo**:
+- Metadados da branch
+- Conteúdo (migrations, functions, triggers, RLS, automations, auth config)
+- Checksum
+- Para data branches: data_branch_db_name, expires_at
+
+#### Passo 6: Criação de Banco para Data Branches (linhas 179-192)
+```go
+if req.BranchType == BranchTypeData && dataBranchDBName != nil {
+    if err := s.createDataBranchDB(ctx, *dataBranchDBName, projectSlug); err != nil {
+        _ = s.DeleteBranch(ctx, projectSlug, req.Name)
+        return nil, fmt.Errorf("failed to create data branch database: %w", err)
+    }
+
+    if err := s.registerDataBranch(ctx, projectSlug, req.Name, *dataBranchDBName, createdBy); err != nil {
+        _ = s.DeleteBranch(ctx, projectSlug, req.Name)
+        return nil, fmt.Errorf("failed to register data branch: %w", err)
+    }
+}
+```
+
+**createDataBranchDB** (linhas 565-596):
+```go
+func (s *BranchService) createDataBranchDB(ctx context.Context, dbName, projectSlug string) error {
+    templateDB := fmt.Sprintf("cascata_%s", projectSlug)
+    
+    // Sanitização
+    if !isValidDBName(dbName) {
+        return fmt.Errorf("invalid database name")
+    }
+    
+    sanitizedDBName := sanitizeIdentifier(dbName)
+    sanitizedTemplateDB := sanitizeIdentifier(templateDB)
+    
+    query := fmt.Sprintf("CREATE DATABASE %s TEMPLATE %s", sanitizedDBName, sanitizedTemplateDB)
+    
+    _, err := s.pool.Exec(ctx, query)
+    return err
+}
+```
+
+**O que acontece**:
+- Usa o banco do projeto como template: `cascata_{project_slug}`
+- Cria novo banco: `cascata_{project_slug}_{branch_name}_data`
+- Usa CREATE DATABASE ... TEMPLATE (cópia completa do banco)
+
+**registerDataBranch** (linhas 639-666):
+```go
+func (s *BranchService) registerDataBranch(ctx context.Context, projectSlug, branchName, dbName string, createdBy *string) error {
+    templateDB := fmt.Sprintf("cascata_%s", projectSlug)
+    expiresAt := time.Now().Add(168 * time.Hour)
+    
+    query := `
+        INSERT INTO system.data_branches (
+            project_slug, branch_name, db_name, template_db,
+            status, created_by, expires_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `
+    
+    _, err := s.pool.Exec(ctx, query, projectSlug, branchName, dbName, templateDB, BranchStatusActive, createdBy, expiresAt)
+    return err
+}
+```
+
+---
+
+## 3. Fluxo de Materialização de Branch (AccessBranch)
+
+### 3.1 Controller Layer
+**Localização**: `backend/internal/controllers/branch.go:533-586`
+
+```go
+func (c *BranchController) AccessBranch(w http.ResponseWriter, r *http.Request)
+```
+
+**Fluxo EXATO**:
+1. Extrai contexto e valida project
+2. Deserializa JSON body para AccessBranchRequest
+3. Chama `c.BranchSvc.AccessBranch(ctx, projectSlug, req.BranchName)`
+4. Set cookie "cascata_active_env" com env_identifier
+5. Retorna response com database_name e env_identifier
+
+### 3.2 Service Layer
+**Localização**: `backend/internal/domain/branching/environment/manager.go:770-818`
+
+```go
+func (s *BranchService) AccessBranch(ctx context.Context, projectSlug, branchName string) (*AccessBranchResponse, error)
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Busca Branch (linhas 771-774)
+```go
+branch, err := s.GetBranch(ctx, projectSlug, branchName)
+```
+
+#### Passo 2: Valida Status (linhas 776-778)
+```go
+if branch.Status != BranchStatusActive {
+    return nil, fmt.Errorf("branch '%s' is not active (status: %s)", branchName, branch.Status)
+}
+```
+
+#### Passo 3: Branch Main - Sem Materialização (linhas 781-791)
+```go
+if branch.IsMain {
+    sourceDB := fmt.Sprintf("cascata_%s", projectSlug)
+    return &AccessBranchResponse{
+        Success:       true,
+        Message:       "Main branch is always live — connected to production database.",
+        Branch:        *branch,
+        DatabaseName:  sourceDB,
+        EnvIdentifier: "live",
+        Materialized:  false,
+    }, nil
+}
+```
+
+**O que acontece**: Branch main conecta diretamente ao banco de produção `cascata_{project_slug}`
+
+#### Passo 4: Branches Não-Main - Materialização (linhas 798-809)
+```go
+switch branch.BranchType {
+case BranchTypeEnvironment:
+    err = s.accessEnvironmentBranch(ctx, branch, projectSlug, response)
+case BranchTypeData:
+    err = s.accessDataBranch(ctx, branch, projectSlug, response)
+default:
+    return nil, fmt.Errorf("unknown branch type: %s", branch.BranchType)
+}
+```
+
+#### Passo 5: Atualiza last_accessed_at (linhas 812-815)
+```go
+_, _ = s.pool.Exec(ctx,
+    `UPDATE system.branches SET last_accessed_at = NOW() WHERE id = $1`,
+    branch.ID,
+)
+```
+
+### 3.3 Materialização de Environment Branch
+**Localização**: `backend/internal/domain/branching/environment/manager.go:821-887`
+
+```go
+func (s *BranchService) accessEnvironmentBranch(ctx context.Context, branch *Branch, projectSlug string, response *AccessBranchResponse) error
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Determina Nomes de Banco (linhas 822-823)
+```go
+sourceDB := fmt.Sprintf("cascata_%s", projectSlug)
+targetDB := fmt.Sprintf("cascata_%s_%s_env", projectSlug, sanitizeBranchName(branch.Name))
+```
+
+**Exemplo**:
+- sourceDB: `cascata_meu-projeto`
+- targetDB: `cascata_meu-projeto_feat_novo-checkout_env`
+
+#### Passo 2: Verifica se Já Materializado (linhas 826-850)
+```go
+if branch.MaterializedDB != nil && *branch.MaterializedDB != "" {
+    var exists bool
+    if err := s.pool.QueryRow(ctx,
+        `SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)`,
+        *branch.MaterializedDB,
+    ).Scan(&exists); err == nil && exists {
+        // Já materializada e banco existe — apenas reconecta
+        response.DatabaseName = *branch.MaterializedDB
+        response.EnvIdentifier = branch.Name
+        response.Materialized = false
+        response.Message = fmt.Sprintf("Reconnected to environment branch '%s'. Database '%s' is active.", branch.Name, *branch.MaterializedDB)
+        
+        // Calcula TTL restante
+        if branch.LastAccessedAt != nil && branch.MaterializationTTLHours != nil {
+            ttlEnd := branch.LastAccessedAt.Add(time.Duration(*branch.MaterializationTTLHours) * time.Hour)
+            remaining := time.Until(ttlEnd)
+            if remaining > 0 {
+                response.ExpiresIn = remaining.Round(time.Minute).String()
+            }
+        }
+        return nil
+    }
+    // Banco foi dropado (TTL ou manual) — rematerializa
+}
+```
+
+**O que acontece**:
+- Se materialized_db não é NULL e o banco existe, reconecta sem recriar
+- Se o banco foi dropado, rematerializa
+
+#### Passo 3: Validações de Nome (linhas 853-855)
+```go
+if !isValidDBName(targetDB) || len(targetDB) > 63 {
+    return fmt.Errorf("generated database name is invalid: %s", targetDB)
+}
+```
+
+#### Passo 4: Cria Thin Clone (linhas 858-860)
+```go
+if err := s.materializeThinClone(ctx, branch, sourceDB, targetDB); err != nil {
+    return fmt.Errorf("failed to materialize thin clone: %w", err)
+}
+```
+
+**materializeThinClone** (linhas 925-1016):
+```go
+func (s *BranchService) materializeThinClone(ctx context.Context, branch *Branch, sourceDB, targetDB string) error
+```
+
+**Fluxo EXATO**:
+
+##### Passo 4.1: Verifica se Banco Já Existe (linhas 927-978)
+```go
+var exists bool
+checkSQL := `SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)`
+_ = s.pool.QueryRow(ctx, checkSQL, targetDB).Scan(&exists)
+
+if !exists {
+    createSQL := fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{targetDB}.Sanitize())
+    if _, err := s.pool.Exec(ctx, createSQL); err != nil {
+        return fmt.Errorf("failed to create database %s: %w", targetDB, err)
+    }
+} else {
+    // Banco já existe - sequência de drop seguro
+    log.Printf("[materializeThinClone] Collision detected for %s - initiating safe drop sequence", targetDB)
+    
+    // Passo 1: Fecha/invalida o pool do backend para este banco
+    services.Reload(targetDB)
+    time.Sleep(100 * time.Millisecond)
+    
+    // Passo 2: Termina TODAS as conexões ativas
+    terminateSQL := fmt.Sprintf(
+        "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()",
+    )
+    _, _ = s.pool.Exec(ctx, terminateSQL, targetDB)
+    
+    // Passo 3: DROP DATABASE WITH (FORCE)
+    dropSQL := fmt.Sprintf("DROP DATABASE %s WITH (FORCE)", pgx.Identifier{targetDB}.Sanitize())
+    _, err := s.pool.Exec(ctx, dropSQL)
+    if err != nil {
+        dropSQL = fmt.Sprintf("DROP DATABASE %s", pgx.Identifier{targetDB}.Sanitize())
+        _, _ = s.pool.Exec(ctx, dropSQL)
+    }
+    
+    // Passo 4: Recria o banco limpo
+    createSQL := fmt.Sprintf("CREATE DATABASE %s", pgx.Identifier{targetDB}.Sanitize())
+    if _, err := s.pool.Exec(ctx, createSQL); err != nil {
+        return fmt.Errorf("failed to recreate database %s after collision: %w", targetDB, err)
+    }
+    
+    log.Printf("[materializeThinClone] Safe drop/recreate completed for %s", targetDB)
+}
+```
+
+**O que acontece**:
+- Se banco não existe: CREATE DATABASE
+- Se banco existe: fecha conexões, termina backends, DROP WITH FORCE, recria
+
+##### Passo 4.2: Executa pg_dump --schema-only (linhas 983-987)
+```go
+if err := s.execSchemaClone(ctx, sourceDB, targetDB); err != nil {
+    _ = s.dropDataBranchDB(ctx, targetDB)
+    return fmt.Errorf("schema clone failed: %w", err)
+}
+```
+
+**execSchemaClone** (não mostrado no código lido, mas comentado nas linhas 980-982):
+- Executa `pg_dump --schema-only` do sourceDB
+- Aplica no targetDB via psql
+- Copia: tabelas, sequences, enums, constraints, indexes, functions, triggers, RLS policies, grants
+- **NÃO copia dados** (apenas schema)
+
+##### Passo 4.3: Reaplica Permissões (linhas 992-995)
+```go
+dbSvc := services.DatabaseService{}
+if err := dbSvc.InitPublicSchemaPermissions(ctx, targetDB); err != nil {
+    log.Printf("[materializeThinClone] Warning: failed to init permissions for %s: %v", targetDB, err)
+}
+```
+
+##### Passo 4.4: Hydration - Reaplica Migrations Salvas (linhas 998-1016)
+```go
+if len(branch.Migrations) > 0 {
+    log.Printf("[materializeThinClone] Hydrating branch %s with %d saved migrations", branch.Name, len(branch.Migrations))
+    
+    poolProvider := deployer.NewPoolAdapter()
+    targetConn, err := poolProvider.AcquireForProject(branch.ProjectSlug, branch.Name)
+    if err == nil {
+        defer targetConn.Close()
+        for _, m := range branch.Migrations {
+            if m.SQL != "" {
+                _, err := targetConn.Exec(m.SQL)
+                if err != nil {
+                    log.Printf("[materializeThinClone] Failed to apply hydration migration %s: %v", m.Version, err)
+                }
+            }
+        }
+        log.Printf("[materializeThinClone] Hydration completed for branch %s", branch.Name)
+    }
+}
+```
+
+**O que acontece**:
+- Conecta ao banco recém-criado
+- Executa as migrations salvas em branch.Migrations
+- Isso garante que o schema da branch esteja consistente
+
+#### Passo 5: Registra Materialização (linhas 863-873)
+```go
+_, err := s.pool.Exec(ctx,
+    `UPDATE system.branches
+     SET materialized_db = $1, last_accessed_at = NOW()
+     WHERE id = $2`,
+    targetDB, branch.ID,
+)
+if err != nil {
+    _ = s.dropDataBranchDB(ctx, targetDB)
+    return fmt.Errorf("failed to record materialization: %w", err)
+}
+```
+
+#### Passo 6: Retorna Response (linhas 875-886)
+```go
+response.DatabaseName = targetDB
+response.EnvIdentifier = branch.Name
+response.Materialized = true
+response.Message = fmt.Sprintf("Environment branch '%s' materialized as thin clone '%s'. Schema-only, no production data.", branch.Name, targetDB)
+
+ttlHours := 24
+if branch.MaterializationTTLHours != nil {
+    ttlHours = *branch.MaterializationTTLHours
+}
+response.ExpiresIn = fmt.Sprintf("%dh0m", ttlHours)
+```
+
+### 3.4 Acesso a Data Branch
+**Localização**: `backend/internal/domain/branching/environment/manager.go:890-921`
+
+```go
+func (s *BranchService) accessDataBranch(ctx context.Context, branch *Branch, projectSlug string, response *AccessBranchResponse) error
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Valida data_branch_db_name (linhas 891-893)
+```go
+if branch.DataBranchDBName == nil || *branch.DataBranchDBName == "" {
+    return nil, fmt.Errorf("data branch '%s' has no associated database", branch.Name)
+}
+```
+
+#### Passo 2: Verifica se Banco Existe (linhas 896-906)
+```go
+var exists bool
+if err := s.pool.QueryRow(ctx,
+    `SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = $1)`,
+    *branch.DataBranchDBName,
+).Scan(&exists); err != nil {
+    return fmt.Errorf("failed to verify data branch database: %w", err)
+}
+
+if !exists {
+    return fmt.Errorf("data branch database '%s' does not exist — it may have expired or been deleted", *branch.DataBranchDBName)
+}
+```
+
+#### Passo 3: Retorna Response (linhas 908-920)
+```go
+response.DatabaseName = *branch.DataBranchDBName
+response.EnvIdentifier = branch.Name
+response.Materialized = false
+response.Message = fmt.Sprintf("Connected to data branch '%s'. Full clone database '%s'.", branch.Name, *branch.DataBranchDBName)
+
+if branch.ExpiresAt != nil {
+    remaining := time.Until(*branch.ExpiresAt)
+    if remaining > 0 {
+        response.ExpiresIn = remaining.Round(time.Minute).String()
+    }
+}
+```
+
+---
+
+## 4. Fluxo de Conexão ao Banco (GetProjectPool)
+
+### 4.1 Service Layer
+**Localização**: `backend/internal/services/project.go:170-241`
+
+```go
+func GetProjectPool(project *types.Project, env string) (*pgxpool.Pool, error)
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Determina Nome do Banco (linhas 171-182)
+```go
+var dbName string
+var connString string
+
+// BYOD: Se o projeto tem external_db_url configurado, usa o banco externo
+if project.Metadata.ExternalDbUrl != "" {
+    connString = project.Metadata.ExternalDbUrl
+    dbName = "external"
+} else {
+    dbName = project.DbName
+}
+```
+
+#### Passo 2: ISOLATION GUARD - Redireciona para Branch (linhas 184-197)
+```go
+// ISOLATION GUARD: Se não for o ambiente 'live', resolvemos o banco da branch
+if env != "" && env != "live" && project.Metadata.ExternalDbUrl == "" {
+    var materializedDB string
+    err := SystemPool.QueryRow(context.Background(),
+        "SELECT materialized_db FROM system.branches WHERE project_slug = $1 AND name = $2 AND status = 'active'",
+        project.Slug, env).Scan(&materializedDB)
+    
+    if err == nil && materializedDB != "" {
+        dbName = materializedDB
+        log.Printf("[ProjectPool] Isolation Active: Redirecting %s to branch DB %s", project.Slug, dbName)
+    } else {
+        log.Printf("[ProjectPool:Warn] Branch %s not materialized for project %s. Falling back to Live (UNSAFE).", env, project.Slug)
+    }
+}
+```
+
+**O que acontece**:
+- Se env != "live", consulta system.branches para materialized_db
+- Se materialized_db existe, usa esse banco
+- Se não existe, FALLBACK para live (UNSAFE!)
+
+**VARIÁVEL CRÍTICA**: `env` é o parâmetro que determina qual banco usar
+- env = "live" → banco de produção
+- env = "feat/novo-checkout" → banco da branch materializada
+
+#### Passo 3: Cria Pool (linhas 199-223)
+```go
+maxConns := int32(project.Metadata.DbConfig.MaxConnections)
+if maxConns <= 0 {
+    maxConns = 10
+}
+
+var pool *pgxpool.Pool
+var err error
+
+if connString != "" {
+    pool, err = pgxpool.New(context.Background(), connString)
+} else {
+    pool = Get(dbName, &PoolConfig{Max: maxConns})
+}
+```
+
+#### Passo 4: Inicializa Schemas (linhas 225-238)
+```go
+dbSvc := DatabaseService{}
+if err := dbSvc.InitTenantSchemas(context.Background(), dbName); err != nil {
+    log.Printf("[ProjectService] Tenant schemas init failed for %s: %v", dbName, err)
+}
+
+if err := dbSvc.EnsureAuthFunctions(context.Background(), dbName); err != nil {
+    log.Printf("[ProjectService] Failed to ensure auth functions for %s: %v", dbName, err)
+}
+```
+
+---
+
+## 5. Fluxo de Merge de Branch (DeployBranch)
+
+### 5.1 Controller Layer
+**Localização**: `backend/internal/controllers/branch.go:409-496`
+
+```go
+func (c *BranchController) DeployBranch(w http.ResponseWriter, r *http.Request)
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Extrai Contexto e Valida (linhas 410-424)
+```go
+val := r.Context().Value(types.CascataCtxKey)
+ctx := val.(*types.CascataRequest)
+
+if ctx.Project == nil {
+    writeBranchError(w, http.StatusNotFound, "Project Context Required")
+    return
+}
+
+if c.Deployer == nil {
+    writeBranchError(w, http.StatusInternalServerError, "Deployer not initialized")
+    return
+}
+```
+
+#### Passo 2: Deserializa Request (linhas 426-430)
+```go
+var req environment.DeployBranchRequest
+if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+    writeBranchError(w, http.StatusBadRequest, "Invalid request body")
+    return
+}
+```
+
+**DeployBranchRequest**:
+```go
+type DeployBranchRequest struct {
+    SourceBranch    string `json:"source_branch"`
+    TargetBranch    string `json:"target_branch"`
+    DryRun          bool   `json:"dry_run"`
+    SafetySnapshot  bool   `json:"safety_snapshot"`
+}
+```
+
+#### Passo 3: Configura Opções (linhas 433-435)
+```go
+opts := deployer.DefaultDeployOptions()
+opts.DryRun = req.DryRun
+opts.SafetySnapshot = req.SafetySnapshot
+```
+
+#### Passo 4: Executa Deploy Merge (linhas 438-444)
+```go
+result, err := c.Deployer.DeployMerge(
+    r.Context(),
+    ctx.Project.Slug,
+    req.SourceBranch,
+    req.TargetBranch,
+    opts,
+)
+```
+
+#### Passo 5: Registra Histórico (linhas 467-492)
+```go
+if c.BranchSvc != nil {
+    if branch, berr := c.BranchSvc.GetBranch(r.Context(), ctx.Project.Slug, req.SourceBranch); berr == nil {
+        var triggeredBy *string
+        if userID, ok := types.GetUserID(r.Context()); ok {
+            triggeredBy = &userID
+        }
+        var sqlStatements []string
+        if result.DiffResult != nil {
+            sqlStatements = result.DiffResult.SQL
+        }
+        
+        insertErr := services.SystemPool.QueryRow(
+            r.Context(),
+            `INSERT INTO system.branch_deploys
+            (branch_id, source_branch, target_branch, status, diff_result, sql_statements, completed_at, triggered_by)
+            VALUES ($1, $2, $3, $4, $5::jsonb, $6, NOW(), $7::uuid)
+            RETURNING id`,
+            branch.ID, req.SourceBranch, req.TargetBranch, "success", diffResultJSON, sqlStatements, triggeredBy,
+        ).Scan(&response.DeployID)
+        
+        if insertErr != nil {
+            fmt.Printf("[BranchController] Failed to record deploy history: %v\n", insertErr)
+        }
+    }
+}
+```
+
+### 5.2 Deployer Layer
+**Localização**: `backend/internal/domain/branching/deployer/deployer.go:21-125`
+
+```go
+func (d *Deployer) DeployMerge(ctx context.Context, projectSlug string, sourceBranch string, targetBranch string, opts DeployOptions) (*DeployMergeResult, error)
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Configura Diff Context (linhas 34-41)
+```go
+diffCtx := diff.DiffContext{
+    PoolProvider: d.poolProvider,
+    ProjectSlug:  projectSlug,
+    SourceBranch: sourceBranch,
+    TargetBranch: targetBranch,
+    Mode:         diff.ModeBranchToMain,
+}
+```
+
+#### Passo 2: Executa Diff Engine (linhas 44-51)
+```go
+engine := diff.NewDiffEngine(diffCtx)
+diffResult, err := engine.Run(ctx)
+if err != nil {
+    return &DeployMergeResult{
+        Success: false,
+        Error:   fmt.Errorf("diff generation failed: %w", err).Error(),
+    }, err
+}
+```
+
+#### Passo 3: Verifica se há Mudanças (linhas 53-59)
+```go
+if len(diffResult.SQL) == 0 {
+    return &DeployMergeResult{
+        Success: true,
+        Message: "No changes to deploy",
+        DiffResult: diffResult,
+    }, nil
+}
+```
+
+#### Passo 4: Executa Dry Run se Solicitado (linhas 67-96)
+```go
+if opts.DryRun {
+    dryRunResult, err := d.RunDryRun(ctx, projectSlug, targetBranch, diffResult.SQL)
+    if err != nil {
+        return &DeployMergeResult{
+            Success: false,
+            Error:   fmt.Errorf("dry run failed: %w", err).Error(),
+            DiffResult: diffResult,
+        }, err
+    }
+    
+    if !dryRunResult.Success {
+        return &DeployMergeResult{
+            Success: false,
+            Error:   dryRunResult.Error,
+            DiffResult: diffResult,
+            DryRunResult: dryRunResult,
+        }, fmt.Errorf("dry run validation failed: %s", dryRunResult.Error)
+    }
+    
+    return &DeployMergeResult{
+        Success: true,
+        Message: "Dry run completed successfully",
+        DiffResult: diffResult,
+        DryRunResult: dryRunResult,
+    }, nil
+}
+```
+
+#### Passo 5: Executa Deploy com ou sem Snapshot (linhas 99-103)
+```go
+if opts.SafetySnapshot {
+    err = d.DeployWithSafety(ctx, projectSlug, targetBranch, diffResult.SQL, opts)
+} else {
+    err = d.ExecuteDeploy(ctx, projectSlug, targetBranch, diffResult.SQL, opts)
+}
+```
+
+### 5.3 ExecuteDeploy
+**Localização**: `backend/internal/domain/branching/deployer/transaction.go:69-157`
+
+```go
+func (d *Deployer) ExecuteDeploy(ctx context.Context, projectSlug string, env string, sql []string, opts DeployOptions) error
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Adquire Conexão (linhas 89-93)
+```go
+conn, err := d.poolProvider.AcquireForProject(projectSlug, env)
+if err != nil {
+    return fmt.Errorf("pool acquire failed: %w", err)
+}
+defer conn.Close()
+```
+
+**IMPORTANTE**: `env` aqui é o `targetBranch` do deploy merge
+- Se targetBranch = "main", conecta ao banco de produção
+- Se targetBranch = "outra-branch", conecta ao banco dessa branch
+
+#### Passo 2: Configura Timeouts (linhas 96-98)
+```go
+if err := d.configureTimeouts(ctx, conn, opts); err != nil {
+    return fmt.Errorf("timeout configuration failed: %w", err)
+}
+```
+
+#### Passo 3: Inicia Transação (linhas 101-104)
+```go
+tx, err := conn.Begin()
+if err != nil {
+    return fmt.Errorf("begin transaction failed: %w", err)
+}
+```
+
+#### Passo 4: Executa Statements (linhas 118-142)
+```go
+for i, statement := range sql {
+    _, err := tx.Exec(statement)
+    if err != nil {
+        deployErr = fmt.Errorf("statement %d failed: %w\nStatement: %s", i+1, err, statement)
+        
+        if isLockTimeoutError(err) {
+            deployErr = fmt.Errorf("deploy blocked: table lock timeout — production is under load. Try again in a few minutes. Statement: %s", truncateStatement(statement, 100))
+        } else if isDeadlockError(err) {
+            deployErr = fmt.Errorf("deploy blocked: deadlock detected — another migration may be running concurrently. Statement: %s", truncateStatement(statement, 100))
+        }
+        
+        return deployErr
+    }
+}
+```
+
+#### Passo 5: Commit (linhas 145-148)
+```go
+if err := tx.Commit(); err != nil {
+    deployErr = fmt.Errorf("commit failed: %w", err)
+    return deployErr
+}
+```
+
+**O que acontece**: Os SQL statements são aplicados DIRETAMENTE no banco de destino
+
+### 5.4 Diff Engine
+**Localização**: `backend/internal/domain/branching/diff/engine.go:25-113`
+
+```go
+func (e *DiffEngine) Run(ctx context.Context) (*DiffResult, error)
+```
+
+**Fluxo EXATO**:
+
+#### Passo 1: Adquire Conexões (linhas 30-40)
+```go
+sourceConn, err := e.ctx.PoolProvider.AcquireForProject(e.ctx.ProjectSlug, e.ctx.SourceBranch)
+if err != nil {
+    return nil, fmt.Errorf("failed to acquire source connection: %w", err)
+}
+defer sourceConn.Close()
+
+targetConn, err := e.ctx.PoolProvider.AcquireForProject(e.ctx.ProjectSlug, e.ctx.TargetBranch)
+if err != nil {
+    return nil, fmt.Errorf("failed to acquire target connection: %w", err)
+}
+defer targetConn.Close()
+```
+
+**O que acontece**:
+- sourceConn: conecta ao banco da branch de origem
+- targetConn: conecta ao banco da branch de destino (geralmente "main")
+
+#### Passo 2: Executa 7 Fases de Diff (linhas 51-106)
+```go
+diffPhases := []DiffPhase{
+    &TablesDiff{},      // Fase 1: Tabelas
+    &ColumnsDiff{},     // Fase 2: Colunas
+    &IndexesDiff{},    // Fase 3: Índices
+    &RLSDiff{},         // Fase 4: RLS Policies
+    &FunctionsDiff{},   // Fase 5: Funções/RPCs
+    &TriggersDiff{},    // Fase 6: Triggers
+    &PermissionsDiff{}, // Fase 7: Permissões
+}
+
+for _, phase := range diffPhases {
+    if err := phase.Introspect(enrichedCtx); err != nil {
+        result.Success = false
+        result.Error = fmt.Sprintf("phase %s introspection failed: %v", phase.Name(), err)
+        return result, fmt.Errorf("diff failed: %w", err)
+    }
+    
+    phaseSQL := phase.GenerateSQL()
+    result.SQL = append(result.SQL, phaseSQL...)
+    
+    summary := phase.Summary()
+    summary.Duration = time.Since(phaseStart)
+    result.Summaries = append(result.Summaries, summary)
+}
+```
+
+**O que acontece**: Cada fase compara source vs target e gera SQL para sincronizar
+
+---
+
+## 6. PROBLEMA CRÍTICO IDENTIFICADO
+
+### 6.1 Onde os Branches se Misturam
+
+**Localização**: `backend/internal/domain/branching/deployer/deployer.go:438-444` e `backend/internal/domain/branching/deployer/transaction.go:89-93`
+
+```go
+// No DeployMerge
+result, err := c.Deployer.DeployMerge(
+    r.Context(),
+    ctx.Project.Slug,
+    req.SourceBranch,  // ex: "feat/novo-checkout"
+    req.TargetBranch,  // ex: "main"
+    opts,
+)
+
+// No ExecuteDeploy
+conn, err := d.poolProvider.AcquireForProject(projectSlug, env)  // env = targetBranch = "main"
+```
+
+**O que acontece**:
+1. Quando você faz merge de "feat/novo-checkout" → "main"
+2. O diff engine gera SQL comparando os dois bancos
+3. O ExecuteDeploy aplica esse SQL DIRETAMENTE no banco "main"
+4. Isso modifica o banco de produção
+5. Outros branches que usam o mesmo banco "main" são afetados
+
+### 6.2 Por Que Isso Acontece
+
+**Localização**: `backend/internal/services/project.go:184-197`
+
+```go
+// ISOLATION GUARD: Se não for o ambiente 'live', resolvemos o banco da branch
+if env != "" && env != "live" && project.Metadata.ExternalDbUrl == "" {
+    var materializedDB string
+    err := SystemPool.QueryRow(context.Background(),
+        "SELECT materialized_db FROM system.branches WHERE project_slug = $1 AND name = $2 AND status = 'active'",
+        project.Slug, env).Scan(&materializedDB)
+    
+    if err == nil && materializedDB != "" {
+        dbName = materializedDB
+    } else {
+        log.Printf("[ProjectPool:Warn] Branch %s not materialized for project %s. Falling back to Live (UNSAFE).", env, project.Slug)
+    }
+}
+```
+
+**Problema**:
+- Se env = "main", NÃO há redirecionamento
+- Usa dbName = project.DbName (banco de produção)
+- Quando merge é feito para "main", modifica o banco compartilhado
+
+### 6.3 Como Deveria Ser (Multi-Tenancy Real)
+
+Para isolamento total, cada branch deveria:
+1. Ter seu próprio banco PostgreSQL (já implementado para data branches)
+2. O merge deveria:
+   - Comparar branch → main
+   - Gerar SQL
+   - Aplicar SQL apenas no banco da branch de destino
+   - NUNCA tocar no banco de outras branches
+
+**O que está faltando**:
+- Environment branches não têm bancos próprios na criação
+- Materialização é on-demand e usa thin clone
+- Merge para "main" afeta o banco compartilhado
+- Não há isolamento real entre branches
+
+---
+
+## 7. Resumo das Variáveis de Conexão
+
+### 7.1 Variável `env`
+
+**Onde é usada**: `GetProjectPool(project, env)`
+
+**Valores possíveis**:
+- `"live"` → banco de produção `cascata_{project_slug}`
+- `"main"` → banco de produção `cascata_{project_slug}` (mesmo que live)
+- `"feat/novo-checkout"` → banco materializado `cascata_{project_slug}_feat_novo-checkout_env`
+- Nome de qualquer branch → banco materializado dessa branch
+
+**Como é determinada**:
+1. Via header `X-Cascata-Env` (set pelo middleware branch_rewriter.go)
+2. Via cookie `cascata_active_env` (set pelo AccessBranch)
+3. Via parâmetro em DeployBranch (targetBranch)
+
+### 7.2 Variável `materialized_db`
+
+**Onde é usada**: Campo em `system.branches`
+
+**Quando é preenchida**:
+- NULL quando branch é criada (apenas metadados)
+- Preenchida com nome do banco quando AccessBranch é chamado
+- Exemplo: `"cascata_meu-projeto_feat_novo-checkout_env"`
+
+**Como é usada**:
+- GetProjectPool consulta esse campo
+- Se existe, redireciona para esse banco
+- Se não existe, fallback para live (UNSAFE)
+
+---
+
+## 8. Fluxo Completo de Merge (Diagrama)
+
+```
+User Request: POST /branch/deploy
+{
+  "source_branch": "feat/novo-checkout",
+  "target_branch": "main",
+  "dry_run": false,
+  "safety_snapshot": true
+}
+    ↓
+BranchController.DeployBranch
+    ↓
+Deployer.DeployMerge(projectSlug, "feat/novo-checkout", "main", opts)
+    ↓
+DiffEngine.Run()
+    ↓
+AcquireForProject(projectSlug, "feat/novo-checkout") → sourceConn (banco da branch)
+AcquireForProject(projectSlug, "main") → targetConn (banco de produção)
+    ↓
+7 Fases de Diff:
+  1. TablesDiff:    Compara tabelas, gera CREATE/DROP TABLE
+  2. ColumnsDiff:   Compara colunas, gera ADD/ALTER/DROP COLUMN
+  3. IndexesDiff:   Compara índices, gera CREATE/DROP INDEX
+  4. RLSDiff:       Compara RLS policies, gera DROP/CREATE POLICY
+  5. FunctionsDiff: Compara funções, gera CREATE OR REPLACE FUNCTION
+  6. TriggersDiff:  Compara triggers, gera DROP/CREATE TRIGGER
+  7. PermissionsDiff: Gera GRANT para novos objetos
+    ↓
+diffResult.SQL = ["CREATE TABLE...", "ALTER TABLE...", ...]
+    ↓
+Deployer.DeployWithSafety()
+    ↓
+createSnapshot() → Cria banco template do estado atual
+    ↓
+ExecuteDeploy(projectSlug, "main", diffResult.SQL, opts)
+    ↓
+AcquireForProject(projectSlug, "main") → conn (banco de produção)
+    ↓
+tx := conn.Begin()
+    ↓
+for statement in diffResult.SQL:
+    tx.Exec(statement)  ← APLICA DIRETAMENTE NO BANCO DE PRODUÇÃO
+    ↓
+tx.Commit()
+    ↓
+Registro em system.branch_deploys
+```
+
+---
+
+## 9. Conclusão
+
+### 9.1 Estado Atual
+
+**O que funciona**:
+- Criação de branches com metadados
+- Materialização on-demand de environment branches (thin clone)
+- Criação de bancos dedicados para data branches
+- Diff engine completo (7 fases)
+- Histórico de deploys
+
+**O que NÃO funciona (isolamento)**:
+- Merge para "main" modifica o banco de produção compartilhado
+- Outros branches podem ser afetados por mudanças no main
+- Environment branches não têm isolamento real
+- Fallback para live quando branch não materializada (UNSAFE)
+
+### 9.2 Por Que Merge Afeta Outros Branches
+
+**Causa raiz**: O sistema usa um banco compartilhado para "main" e branches não materializados. Quando merge é feito para "main", o SQL é aplicado diretamente nesse banco compartilhado.
+
+**Fluxo do problema**:
+1. Branch A é criada (apenas metadados, sem banco)
+2. Branch B é criada (apenas metadados, sem banco)
+3. Merge A → main aplica SQL no banco de produção
+4. Branch B, quando acessada, pode ver as mudanças do merge
+5. Não há isolamento entre branches
+
+### 9.3 Solução Necessária
+
+Para isolamento total (multi-tenancy real):
+1. Cada branch deve ter seu próprio banco PostgreSQL (como data branches)
+2. Merge deve aplicar SQL apenas no banco da branch de destino
+3. Branches nunca devem compartilhar o mesmo banco
+4. "main" deve ser apenas uma referência, não um banco compartilhado
