@@ -1,4 +1,39 @@
-Fiz esses teste aqui:
+Request URL
+https://aliado.unibloom.com.br/store_members?select=*&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5&active=eq.true
+Request Method
+GET
+Status Code
+200 OK
+Remote Address
+
+Request URL
+https://aliado.unibloom.com.br/user_profiles?select=full_name,display_name&id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5
+Request Method
+GET
+Status Code
+200 OK
+
+Request URL
+https://aliado.unibloom.com.br/stores?select=id,name,description,slug&id=in.(edd19e12-cdd3-4f42-b79b-64722bf77a07)
+Request Method
+GET
+Status Code
+200 OK
+
+Request URL
+https://aliado.unibloom.com.br/stores?select=*&slug=eq.autocary-3426&limit=1
+Request Method
+GET
+Status Code
+200 OK
+
+Request URL
+https://aliado.unibloom.com.br/store_members?select=role_label&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5
+Request Method
+GET
+Status Code
+200 OK
+
 Request URL
 https://aliado.unibloom.com.br/store_product_offers?select=id,price,custom_description,product_catalog(name,brand)&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&active=eq.true
 Request Method
@@ -6,115 +41,53 @@ GET
 Status Code
 400 Bad Request
 
-response:
-{"error":"resource embedding error: error parsing field 'product_catalog(name': invalid column name 'product_catalog(name'"}
-
-
-no caso peloq ue percebi são essas coisas aqui:
-CREATE TABLE public."product_catalog" (
-  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  "name" text,
-  "slug" text PRIMARY KEY,
-  "description" text,
-  "brand" text,
-  "barcode" text PRIMARY KEY,
-  "category" text,
-  "category_id" uuid PRIMARY KEY,
-  "specs" jsonb DEFAULT '{}'::jsonb,
-  "visibility" text DEFAULT 'public'::text,
-  "network_id" uuid PRIMARY KEY,
-  "owner_store_id" uuid PRIMARY KEY,
-  "active" boolean DEFAULT true,
-  "created_at" timestamp with time zone DEFAULT now(),
-  "updated_at" timestamp with time zone DEFAULT now()
-);
-
----
-
-CREATE TABLE public."store_product_offers" (
-  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  "store_id" uuid PRIMARY KEY,
-  "product_catalog_id" uuid PRIMARY KEY,
-  "variant_id" uuid PRIMARY KEY,
-  "price" numeric,
-  "price_wholesale" numeric,
-  "wholesale_min_qty" integer,
-  "stock" integer DEFAULT 0,
-  "active" boolean DEFAULT true,
-  "custom_description" text,
-  "created_at" timestamp with time zone DEFAULT now(),
-  "updated_at" timestamp with time zone DEFAULT now()
-);
-
 
 
 ---
 
-Sim, são essas duas. E o problema **não é a chamada** — é um bug no parser do Cascata.
+Como vimos acima, o proiblema em si fICOU.
 
----
 
-### O que tá acontecendo
+----
 
-O parser do select tá fazendo split ingênuo por vírgula:
+LOGS:
 
-```
-id, price, custom_description, product_catalog(name,brand)
-```
+cascata-backend-data  | 2026/06/09 00:49:54 [ProjectResolver-LAZY] OPTIONS /stores?select=*&slug=eq.autocary-3426&limit=1 | Host: aliado.unibloom.com.br
+cascata-backend-data  | 2026/06/09 00:49:54 [DomainLocking] Check - Host: aliado.unibloom.com.br, Path: /stores, Method: OPTIONS, CustomDomain: aliado.unibloom.com.br, IsDashboardAuth: false, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend-data  | 2026/06/09 00:49:54 [001af0c80bd9/07vEapYdqh-000017] "OPTIONS http://aliado.unibloom.com.br/stores?select=*&slug=eq.autocary-3426&limit=1 HTTP/1.1" from 172.64.222.173 - 200 0B in 14.895678ms
+cascata-backend-data  | 2026/06/09 00:49:55 [ProjectResolver-LAZY] GET /store_product_offers?select=id,price,custom_description,product_catalog(name,brand)&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&active=eq.true | Host: aliado.unibloom.com.br
+cascata-backend-data  | 2026/06/09 00:49:55 [DomainLocking] Check - Host: aliado.unibloom.com.br, Path: /store_product_offers, Method: GET, CustomDomain: aliado.unibloom.com.br, IsDashboardAuth: false, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-data  | 2026/06/09 00:49:55 [HandlePostgrest] Method: GET, Path: /store_product_offers, URL: /store_product_offers?select=id,price,custom_description,product_catalog(name,brand)&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&active=eq.true
+cascata-backend-data  | 2026/06/09 00:49:55 [001af0c80bd9/07vEapYdqh-000018] "GET http://aliado.unibloom.com.br/store_product_offers?select=id,price,custom_description,product_catalog(name,brand)&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&active=eq.true HTTP/1.1" from 172.64.222.172 - 400 53B in 60.739409ms
+cascata-backend-data  | 2026/06/09 00:49:56 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-data  | 2026/06/09 00:49:56 [Firehose] Flushing 1 audit logs to persistence...
+cascata-db            | 2026-06-09 00:49:55.788 UTC [49910] ERROR:  column reference "id" is ambiguous at character 8
+cascata-db            | 2026-06-09 00:49:55.788 UTC [49910] STATEMENT:  SELECT "id", "price", "custom_description", t1."name", t1."brand" FROM "store_product_offers" LEFT JOIN "public"."product_catalog" AS t1 ON "store_product_offers"."product_catalog_id" = t1."id" WHERE "store_id" = $1 AND "active" = $2
+cascata-nginx         | 172.64.222.173 - - [09/Jun/2026:00:49:54 +0000] "OPTIONS /stores?select=*&slug=eq.autocary-3426&limit=1 HTTP/1.1" 200 0 "https://ais-dev-ppfmb5ir2kjauqvr37g3pa-358532792657.us-east1.run.app/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36" "2804:7f3:801b:f6f:c999:1212:ce9f:4ec"
+cascata-nginx         | 172.64.222.172 - - [09/Jun/2026:00:49:55 +0000] "GET /stores?select=*&slug=eq.autocary-3426&limit=1 HTTP/1.1" 200 505 "https://ais-dev-ppfmb5ir2kjauqvr37g3pa-358532792657.us-east1.run.app/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36" "2804:7f3:801b:f6f:c999:1212:ce9f:4ec"
+cascata-nginx         | 172.64.222.173 - - [09/Jun/2026:00:49:55 +0000] "OPTIONS /store_members?select=role_label&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5 HTTP/1.1" 200 0 "https://ais-dev-ppfmb5ir2kjauqvr37g3pa-358532792657.us-east1.run.app/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36" "2804:7f3:801b:f6f:c999:1212:ce9f:4ec"
+cascata-nginx         | 172.64.222.172 - - [09/Jun/2026:00:49:55 +0000] "GET /store_members?select=role_label&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5 HTTP/1.1" 200 25 "https://ais-dev-ppfmb5ir2kjauqvr37g3pa-358532792657.us-east1.run.app/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36" "2804:7f3:801b:f6f:c999:1212:ce9f:4ec"
+cascata-nginx         | 172.64.222.173 - - [09/Jun/2026:00:49:55 +0000] "OPTIONS /store_product_offers?select=id,price,custom_description,product_catalog(name,brand)&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&active=eq.true HTTP/1.1" 200 0 "https://ais-dev-ppfmb5ir2kjauqvr37g3pa-358532792657.us-east1.run.app/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36" "2804:7f3:801b:f6f:c999:1212:ce9f:4ec"
+cascata-nginx         | 172.64.222.172 - - [09/Jun/2026:00:49:55 +0000] "GET /store_product_offers?select=id,price,custom_description,product_catalog(name,brand)&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&active=eq.true HTTP/1.1" 400 53 "https://ais-dev-ppfmb5ir2kjauqvr37g3pa-358532792657.us-east1.run.app/" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36" "2804:7f3:801b:f6f:c999:1212:ce9f:4ec"
+cascata-backend       | 2026/06/09 00:49:55 [ProjectResolver-LAZY] GET /store_members?select=role_label&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5 | Host: aliado.unibloom.com.br
+cascata-backend       | 2026/06/09 00:49:55 [DomainLocking] Check - Host: aliado.unibloom.com.br, Path: /store_members, Method: GET, CustomDomain: aliado.unibloom.com.br, IsDashboardAuth: false, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend       | 2026/06/09 00:49:55 [HandlePostgrest] Method: GET, Path: /store_members, URL: /store_members?select=role_label&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5
+cascata-backend       | 2026/06/09 00:49:55 [HandlePostgrest] END processing - returning response
+cascata-backend       | 2026/06/09 00:49:55 [7487847747c3/QQmddLEicD-000018] "GET http://aliado.unibloom.com.br/store_members?select=role_label&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5 HTTP/1.1" from 172.64.222.172 - 200 25B in 20.060854ms
+cascata-backend       | 2026/06/09 00:49:55 [ProjectResolver-LAZY] OPTIONS /store_product_offers?select=id,price,custom_description,product_catalog(name,brand)&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&active=eq.true | Host: aliado.unibloom.com.br
+cascata-backend       | 2026/06/09 00:49:55 [DomainLocking] Check - Host: aliado.unibloom.com.br, Path: /store_product_offers, Method: OPTIONS, CustomDomain: aliado.unibloom.com.br, IsDashboardAuth: false, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend       | 2026/06/09 00:49:55 [7487847747c3/QQmddLEicD-000019] "OPTIONS http://aliado.unibloom.com.br/store_product_offers?select=id,price,custom_description,product_catalog(name,brand)&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&active=eq.true HTTP/1.1" from 172.64.222.173 - 200 0B in 15.289326ms
+cascata-backend       | 2026/06/09 00:49:55 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend       | 2026/06/09 00:49:55 [Firehose] Flushing 1 audit logs to persistence...
+cascata-backend-engine  | 2026/06/09 00:49:55 [ProjectResolver-LAZY] GET /stores?select=*&slug=eq.autocary-3426&limit=1 | Host: aliado.unibloom.com.br
+cascata-backend-engine  | 2026/06/09 00:49:55 [DomainLocking] Check - Host: aliado.unibloom.com.br, Path: /stores, Method: GET, CustomDomain: aliado.unibloom.com.br, IsDashboardAuth: false, IsSystemRequest: false, HasAuthHeader: true
+cascata-backend-engine  | 2026/06/09 00:49:55 [HandlePostgrest] Method: GET, Path: /stores, URL: /stores?select=*&slug=eq.autocary-3426&limit=1
+cascata-backend-engine  | 2026/06/09 00:49:55 [HandlePostgrest] END processing - returning response
+cascata-backend-engine  | 2026/06/09 00:49:55 [7c43950e7c4b/Nj5dxckaJI-000016] "GET http://aliado.unibloom.com.br/stores?select=*&slug=eq.autocary-3426&limit=1 HTTP/1.1" from 172.64.222.172 - 200 505B in 21.921643ms
+cascata-backend-engine  | 2026/06/09 00:49:55 [ProjectResolver-LAZY] OPTIONS /store_members?select=role_label&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5 | Host: aliado.unibloom.com.br
+cascata-backend-engine  | 2026/06/09 00:49:55 [DomainLocking] Check - Host: aliado.unibloom.com.br, Path: /store_members, Method: OPTIONS, CustomDomain: aliado.unibloom.com.br, IsDashboardAuth: false, IsSystemRequest: false, HasAuthHeader: false
+cascata-backend-engine  | 2026/06/09 00:49:55 [7c43950e7c4b/Nj5dxckaJI-000017] "OPTIONS http://aliado.unibloom.com.br/store_members?select=role_label&store_id=eq.edd19e12-cdd3-4f42-b79b-64722bf77a07&user_id=eq.d8334b97-6906-4078-ae91-d3782d44c6e5 HTTP/1.1" from 172.64.222.173 - 200 0B in 14.712892ms
+cascata-backend-engine  | 2026/06/09 00:49:55 [WorkerLane] [INFO] health.check {"dlq_length":0,"processing":0,"queue_length":0,"workers_running":4}
+cascata-backend-engine  | 2026/06/09 00:49:55 [Firehose] Flushing 1 audit logs to persistence...
+ubuntu@ip-172-26-15-151:~/cascata$ 
 
-Ele divide tudo por `,` e aí vira:
-
-```
-"id"
-"price"  
-"custom_description"
-"product_catalog(name"   ← quebrou aqui
-"brand)"                 ← e jogou isso como coluna separada
-```
-
-Daí o erro: `invalid column name 'product_catalog(name'`. Ele nunca chegou a entender que era um embedding.
-
----
-
-### A causa raiz
-
-O parser precisa **respeitar parênteses** antes de splitar por vírgula. A lógica correta é:
-
-> só divide na vírgula se o `depth de parênteses == 0`
-
-Algo assim:
-
-```go
-func splitSelectFields(s string) []string {
-    var fields []string
-    depth := 0
-    start := 0
-    for i, ch := range s {
-        switch ch {
-        case '(':
-            depth++
-        case ')':
-            depth--
-        case ',':
-            if depth == 0 {
-                fields = append(fields, strings.TrimSpace(s[start:i]))
-                start = i + 1
-            }
-        }
-    }
-    fields = append(fields, strings.TrimSpace(s[start:]))
-    return fields
-}
-```
-
----
-
-### Resumo
-
-| | |
-|---|---|
-| **Chamada errada?** | Não, sintaxe correta |
-| **Bug no Cascata?** | Sim, no parser de `select=` |
-| **Onde corrigir** | Função que faz split dos campos antes de resolver embeddings |
-
-Depois do split correto aí você ainda precisa implementar a resolução do embedding em si (detectar `resource(cols)`, resolver a FK `product_catalog_id → product_catalog`, fazer o JOIN). Mas o primeiro crash é esse parser.

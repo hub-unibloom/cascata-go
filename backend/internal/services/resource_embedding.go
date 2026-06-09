@@ -226,7 +226,8 @@ func (p *ResourceEmbeddingParser) BuildSelectWithJoins(
 	return selectClause, joinClauses, nil
 }
 
-// buildEmbeddedResource builds JOIN clauses for an embedded resource
+// buildEmbeddedResource builds JOIN clauses for an embedded resource.
+// It returns the JOIN clauses and a JSON-aggregated select expression using jsonb_build_object.
 func (p *ResourceEmbeddingParser) buildEmbeddedResource(
 	ctx context.Context,
 	pool *pgxpool.Pool,
@@ -283,6 +284,9 @@ func (p *ResourceEmbeddingParser) buildEmbeddedResource(
 	columnParts := splitSelectFields(field.Column)
 	selectParts := []string{}
 
+	// Build jsonb_build_object expression for the embedded resource
+	objectPairs := []string{}
+
 	for _, colPart := range columnParts {
 		colPart = strings.TrimSpace(colPart)
 		if colPart == "" {
@@ -308,12 +312,18 @@ func (p *ResourceEmbeddingParser) buildEmbeddedResource(
 			selectParts = append(selectParts, nestedSelect...)
 		} else {
 			// Simple column from embedded table
-			if field.Alias != "" {
-				selectParts = append(selectParts, fmt.Sprintf("%s.%s AS %s", tableAlias, utils.QuoteId(colPart), utils.QuoteId(field.Alias)))
-			} else {
-				selectParts = append(selectParts, fmt.Sprintf("%s.%s", tableAlias, utils.QuoteId(colPart)))
-			}
+			objectPairs = append(objectPairs, fmt.Sprintf("'%s', %s.%s", colPart, utils.QuoteId(tableAlias), utils.QuoteId(colPart)))
 		}
+	}
+
+	// Generate jsonb_build_object for the embedded resource
+	if len(objectPairs) > 0 {
+		quotedTable := utils.QuoteId(field.Table)
+		if field.Alias != "" {
+			quotedTable = utils.QuoteId(field.Alias)
+		}
+		jsonExpr := fmt.Sprintf("jsonb_build_object(%s) AS %s", strings.Join(objectPairs, ", "), quotedTable)
+		selectParts = append([]string{jsonExpr}, selectParts...)
 	}
 
 	return joins, selectParts, nil
